@@ -28,9 +28,9 @@ export default function Home() {
 
       {/* ── Header ── */}
       <header className="flex items-center justify-between flex-wrap gap-3 px-5 md:px-9 pt-6 pb-4 max-w-6xl mx-auto">
-        <div>
-          <div className="font-display text-2xl leading-none" style={{ color: "var(--ink)" }}>Atlas</div>
-          <div className="text-xs mt-0.5" style={{ color: "var(--ink-soft)" }}>your command center</div>
+        <div style={{ marginLeft: "-60px" }}>
+          <div className="font-display text-4xl leading-none" style={{ color: "var(--ink)" }}>Atlas</div>
+          <div className="text-sm mt-1" style={{ color: "var(--ink-soft)" }}>your command center</div>
         </div>
 
         <nav
