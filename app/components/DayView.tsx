@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react"
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,7 +30,7 @@ const CAT_COLORS: Record<Category, string> = {
 
 const GRID_START = 7
 const GRID_END   = 22
-const HOUR_H     = 46
+const HOUR_H     = 60
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -206,7 +206,7 @@ export default function DayView() {
 
       {/* ── Time grid ── */}
       <div className="rounded-2xl overflow-hidden border" style={{ background: "var(--card)", borderColor: "var(--line)", boxShadow: "0 1px 3px rgba(40,20,24,0.05)" }}>
-        <div className="overflow-y-auto" style={{ maxHeight: "72vh" }}>
+        <div className="overflow-y-auto" style={{ maxHeight: "82vh" }}>
           <div className="flex">
             {/* Time labels */}
             <div className="shrink-0 w-14 select-none">
