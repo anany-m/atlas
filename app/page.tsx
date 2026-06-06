@@ -4,8 +4,9 @@ import { useState } from "react"
 import WeekView from "./components/WeekView"
 import DayView from "./components/DayView"
 import QuarterView from "./components/QuarterView"
+import BucketView from "./components/BucketView"
 
-type View = "week" | "day" | "quarter"
+type View = "week" | "day" | "quarter" | "bucket"
 
 export default function Home() {
   const [view, setView] = useState<View>("week")
@@ -13,7 +14,7 @@ export default function Home() {
   return (
     <div className="min-h-screen" style={{ background: "#0C0A0B" }}>
       <div className="flex items-center justify-center pt-5 gap-1">
-        {(["week", "day", "quarter"] as View[]).map(v => (
+        {(["week", "day", "quarter", "bucket"] as View[]).map(v => (
           <button
             key={v}
             onClick={() => setView(v)}
@@ -29,7 +30,10 @@ export default function Home() {
         ))}
       </div>
 
-      {view === "week" ? <WeekView /> : view === "day" ? <DayView /> : <QuarterView />}
+      {view === "week"    ? <WeekView />    :
+       view === "day"     ? <DayView />     :
+       view === "quarter" ? <QuarterView /> :
+                            <BucketView />}
     </div>
   )
 }
