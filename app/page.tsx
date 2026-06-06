@@ -58,7 +58,9 @@ export default function Home() {
       </header>
 
       {/* ── Content ── */}
-      <main className="px-5 md:px-9 pb-12 max-w-6xl mx-auto">
+      <main className={view === "day"
+        ? "px-4 md:px-6 pb-12 w-[96vw] mx-auto"
+        : "px-5 md:px-9 pb-12 max-w-6xl mx-auto"}>
         {view === "week"    ? <WeekView />    :
          view === "day"     ? <DayView />     :
          view === "quarter" ? <QuarterView /> :
