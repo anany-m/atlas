@@ -205,6 +205,7 @@ export default function DayView() {
       </div>
 
       {/* ── Time grid ── */}
+      <div className="w-[70%] mx-auto">
       <div className="rounded-2xl overflow-hidden border" style={{ background: "var(--card)", borderColor: "var(--line)", boxShadow: "0 1px 3px rgba(40,20,24,0.05)" }}>
         <div className="overflow-y-auto" style={{ maxHeight: "82vh" }}>
           <div className="flex">
@@ -262,6 +263,7 @@ export default function DayView() {
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       {/* ── Add Event Modal ── */}
