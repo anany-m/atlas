@@ -1,16 +1,23 @@
 "use client"
 
 import { useState } from "react"
-import WeekView    from "./components/WeekView"
-import DayView     from "./components/DayView"
-import QuarterView from "./components/QuarterView"
-import BucketView  from "./components/BucketView"
-import JobView     from "./components/JobView"
+import { CalendarRange, CalendarClock, Target, Mountain, Briefcase } from "lucide-react"
+import WeekView      from "./components/WeekView"
+import DayView       from "./components/DayView"
+import QuarterView   from "./components/QuarterView"
+import BucketView    from "./components/BucketView"
+import JobView       from "./components/JobView"
 import F1Celebration from "./components/F1Celebration"
 
 type View = "week" | "day" | "quarter" | "bucket" | "jobs"
 
-const TABS: View[] = ["week", "day", "quarter", "bucket", "jobs"]
+const NAV: { id: View; label: string; icon: React.ElementType }[] = [
+  { id: "week",    label: "Week",        icon: CalendarRange },
+  { id: "day",     label: "Day",         icon: CalendarClock },
+  { id: "quarter", label: "Quarter",     icon: Target        },
+  { id: "bucket",  label: "Bucket List", icon: Mountain      },
+  { id: "jobs",    label: "Job Search",  icon: Briefcase     },
+]
 
 export default function Home() {
   const [view, setView] = useState<View>("week")
@@ -19,51 +26,39 @@ export default function Home() {
     <>
       <F1Celebration />
 
-      {/* ── Top bar ── */}
-      <header
-        className="fixed top-0 left-0 right-0 z-50"
-        style={{
-          background:   "rgba(251,246,238,0.88)",
-          backdropFilter: "blur(14px)",
-          borderBottom: "1px solid var(--line)",
-        }}
-      >
-        <div className="max-w-[1150px] mx-auto px-5 h-14 flex items-center justify-between gap-4">
+      {/* ── Header ── */}
+      <header className="flex items-center justify-between flex-wrap gap-3 px-5 md:px-9 pt-6 pb-4 max-w-6xl mx-auto">
+        <div>
+          <div className="font-display text-2xl leading-none" style={{ color: "var(--ink)" }}>Atlas</div>
+          <div className="text-xs mt-0.5" style={{ color: "var(--ink-soft)" }}>your command center</div>
+        </div>
 
-          {/* Brand */}
-          <div className="flex items-baseline gap-2 flex-shrink-0">
-            <span
-              className="text-[1.05rem] font-semibold tracking-tight"
-              style={{ fontFamily: "var(--font-fraunces, serif)", color: "var(--ink)" }}
-            >
-              Atlas
-            </span>
-            <span className="text-[0.68rem] hidden sm:inline" style={{ color: "var(--ink-soft)" }}>
-              / your command center
-            </span>
-          </div>
-
-          {/* Nav — scrollable on small screens */}
-          <nav className="flex items-center gap-1 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-            {TABS.map(v => (
+        <nav
+          className="flex gap-1 overflow-x-auto p-1 rounded-xl"
+          style={{ backgroundColor: "rgba(255,253,250,0.7)", border: "1px solid var(--line)" }}
+        >
+          {NAV.map(({ id, label, icon: Icon }) => {
+            const active = view === id
+            return (
               <button
-                key={v}
-                onClick={() => setView(v)}
-                className="px-4 py-1.5 rounded-full text-sm font-medium transition-all capitalize flex-shrink-0"
+                key={id}
+                onClick={() => setView(id)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-all"
                 style={{
-                  background: view === v ? "var(--burgundy)" : "transparent",
-                  color:      view === v ? "white"           : "var(--ink-soft)",
+                  backgroundColor: active ? "var(--burgundy)" : "transparent",
+                  color:           active ? "#fff"            : "var(--ink-soft)",
                 }}
               >
-                {v}
+                <Icon size={15} />
+                <span>{label}</span>
               </button>
-            ))}
-          </nav>
-        </div>
+            )
+          })}
+        </nav>
       </header>
 
       {/* ── Content ── */}
-      <main className="pt-14">
+      <main className="px-5 md:px-9 pb-12 max-w-6xl mx-auto">
         {view === "week"    ? <WeekView />    :
          view === "day"     ? <DayView />     :
          view === "quarter" ? <QuarterView /> :

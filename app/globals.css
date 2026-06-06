@@ -19,41 +19,144 @@ body {
     linear-gradient(135deg, #FBF6EE, #F3E1DC);
   background-attachment: fixed;
   color: var(--ink);
-  font-family: var(--font-hanken, system-ui, sans-serif);
+  font-family: var(--font-hanken, 'Hanken Grotesk', system-ui, sans-serif);
   min-height: 100vh;
+}
+
+/* ── Font helpers ────────────────────────────────────────────────────────── */
+
+.font-display { font-family: var(--font-fraunces, 'Fraunces', Georgia, serif); }
+.font-body    { font-family: var(--font-hanken, 'Hanken Grotesk', system-ui, sans-serif); }
+
+/* ── Placeholders ────────────────────────────────────────────────────────── */
+
+::placeholder              { color: #A89F8E; }
+.light-ph::placeholder     { color: rgba(251,246,238,0.6); }
+
+/* ── Focus box (weekly focus card) ───────────────────────────────────────── */
+
+.focus-box {
+  background:
+    radial-gradient(at 88% 12%, rgba(176,130,60,0.3), transparent 50%),
+    linear-gradient(135deg, #8A2436, #581621);
+  box-shadow: 0 6px 22px rgba(94,24,34,0.28);
+}
+
+/* ── Ghost-fill bar (savings) ────────────────────────────────────────────── */
+
+.ghost-fill {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(122,34,48,0.22),
+    rgba(122,34,48,0.22) 3px,
+    transparent 3px,
+    transparent 12px
+  );
+}
+
+/* ── Pulse fill (health bars) ────────────────────────────────────────────── */
+
+@keyframes pul { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+.pulse-fill { animation: pul 1.3s ease-in-out infinite; }
+
+/* ── Custom range slider ─────────────────────────────────────────────────── */
+
+input[type=range].slider {
+  -webkit-appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+  outline: none;
+  cursor: pointer;
+  width: 100%;
+}
+input[type=range].slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--burgundy);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+input[type=range].slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--burgundy);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
 }
 
 /* ── F1 celebration ──────────────────────────────────────────────────────── */
 
-@keyframes f1CarZoom {
-  0%  { transform: translateX(-160px); opacity: 1; }
-  90% { opacity: 1; }
-  100%{ transform: translateX(110vw);  opacity: 0; }
+.cele-root {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
 }
 
-@keyframes f1LineZoom {
-  0%  { transform: translateX(-220px); opacity: 0; }
-  12% { opacity: 0.55; }
-  90% { opacity: 0.55; }
-  100%{ transform: translateX(110vw); opacity: 0; }
+.cele-racer {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: 0;
+  display: flex;
+  align-items: center;
+  opacity: .92;
+  animation: zoom 1.45s cubic-bezier(.4,.05,.4,1) forwards;
 }
 
-@keyframes f1FlagAnim {
-  0%  { transform: scale(0)    rotate(-12deg); opacity: 0; }
-  18% { transform: scale(1.25) rotate(9deg);   opacity: 1; }
-  33% { transform: scale(0.92) rotate(-6deg);  opacity: 1; }
-  50% { transform: scale(1.06) rotate(5deg);   opacity: 1; }
-  65% { transform: scale(0.98) rotate(-3deg);  opacity: 1; }
-  80% { transform: scale(1.02) rotate(2deg);   opacity: 1; }
-  90% { opacity: 1; }
-  100%{ transform: scale(0.85) rotate(0deg);   opacity: 0; }
+@keyframes zoom {
+  from { left: -24vw }
+  to   { left: 120vw }
 }
 
-.f1-car  { animation: f1CarZoom  1.4s cubic-bezier(0.15, 0.8, 0.5, 1) forwards; }
-.f1-line { animation: f1LineZoom 1.4s cubic-bezier(0.15, 0.8, 0.5, 1) forwards; }
-.f1-flag { animation: f1FlagAnim 2.3s ease-out forwards; }
+.cele-car {
+  font-size: 66px;
+  filter: drop-shadow(0 5px 8px rgba(0,0,0,.22));
+}
 
-/* ── Health pulse ────────────────────────────────────────────────────────── */
+.streak {
+  display: inline-block;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--gold);
+  margin-right: 6px;
+}
+.streak.s1 { width: 46px; opacity: .7  }
+.streak.s2 { width: 32px; opacity: .5  }
+.streak.s3 { width: 20px; opacity: .35 }
 
-@keyframes healthPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-.health-pulse { animation: healthPulse 2.4s ease-in-out infinite; }
+.cele-flag {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%) scale(.4);
+  opacity: 0;
+  font-size: 96px;
+  filter: drop-shadow(0 8px 20px rgba(0,0,0,.25));
+  animation: flagPop 3s ease forwards;
+}
+
+@keyframes flagPop {
+  0%   { opacity: 0; transform: translate(-50%,-50%) scale(.4)  }
+  12%  { opacity: 1; transform: translate(-50%,-50%) scale(1.1) }
+  18%  {             transform: translate(-50%,-50%) scale(1)   }
+  78%  { opacity: 1; transform: translate(-50%,-50%) scale(1)   }
+  100% { opacity: 0; transform: translate(-50%,-50%) scale(.92) }
+}
+
+.cele-flag .bf {
+  display: inline-block;
+  transform-origin: bottom left;
+  animation: wave .55s ease-in-out 5;
+}
+
+@keyframes wave {
+  0%, 100% { transform: rotate(-10deg) }
+  50%       { transform: rotate( 10deg) }
+}

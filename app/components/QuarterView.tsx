@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { ChevronLeft, ChevronRight, PiggyBank, TrendingUp, Target, HeartPulse, Lightbulb, Plus, X } from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -13,8 +14,9 @@ interface ParkingItem  { id: number; text: string; category: string; link: strin
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const INV_COLORS    = ["#F59E0B","#EC4899","#06B6D4","#8B5CF6","#10B981","#F97316","#FB7185","#A78BFA","#34D399","#60A5FA"]
-const PARKING_COLS  = ["Add to Cart","Health & Wellbeing","Leisure","Interested","Money Matters","Random"]
+const RING_COLORS   = ["#7A2230", "#B0823C", "#4A6C8C", "#5B7B5A", "#B5663F", "#6B4FA0"]
+const INV_COLORS    = ["#7A2230", "#B0823C", "#4A6C8C", "#5B7B5A", "#B5663F", "#6B4FA0", "#C96E3F", "#8A5BAA"]
+const PARKING_COLS  = ["Add to Cart", "Health & Wellbeing", "Leisure", "Interested", "Money Matters", "Random"]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -34,24 +36,10 @@ function fmt$(n: number): string {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n)
 }
 
-// ─── Shared styles ────────────────────────────────────────────────────────────
+// ─── Shared card style ────────────────────────────────────────────────────────
 
-const CARD      = "rounded-2xl p-5 border"
-const CARD_STYLE = { background: "var(--card)", borderColor: "var(--line)" }
-
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--ink-soft)" }}>{children}</p>
-}
-
-function XBtn({ onClick }: { onClick: () => void }) {
-  return (
-    <button onClick={onClick} className="opacity-0 group-hover:opacity-30 hover:!opacity-70 transition-opacity flex-shrink-0" style={{ color: "var(--ink)" }}>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-      </svg>
-    </button>
-  )
-}
+const CARD = "rounded-2xl p-5 border"
+const CS   = { background: "var(--card)", borderColor: "var(--line)", boxShadow: "0 1px 3px rgba(40,20,24,0.05)" }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -126,8 +114,7 @@ export default function QuarterView() {
     setInvestment(iv => iv ? { ...iv, goalAmount: val } : iv)
     if (invGoalTimer.current) clearTimeout(invGoalTimer.current)
     invGoalTimer.current = setTimeout(() =>
-      fetch(`/api/quarter/investment?${qs}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ goalAmount: val }) }),
-    500)
+      fetch(`/api/quarter/investment?${qs}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ goalAmount: val }) }), 500)
   }
 
   const addInvEntry = async () => {
@@ -161,8 +148,7 @@ export default function QuarterView() {
     setGoals(gs => gs.map(g => g.id === id ? { ...g, progress } : g))
     if (goalTimers.current[id]) clearTimeout(goalTimers.current[id])
     goalTimers.current[id] = setTimeout(() =>
-      fetch(`/api/quarter/goals/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ progress }) }),
-    400)
+      fetch(`/api/quarter/goals/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ progress }) }), 400)
   }
 
   const deleteGoal = async (id: number) => {
@@ -186,8 +172,7 @@ export default function QuarterView() {
     setHealth(hs => hs.map(h => h.id === id ? { ...h, currentValue } : h))
     if (healthTimers.current[id]) clearTimeout(healthTimers.current[id])
     healthTimers.current[id] = setTimeout(() =>
-      fetch(`/api/quarter/health/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ currentValue }) }),
-    400)
+      fetch(`/api/quarter/health/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ currentValue }) }), 400)
   }
 
   const deleteHealth = async (id: number) => {
@@ -227,144 +212,120 @@ export default function QuarterView() {
   const goalAmount    = investment?.goalAmount ?? 0
   const invPct        = goalAmount > 0 ? Math.min(100, (totalInvested / goalAmount) * 100) : 0
 
-  const invSegments = (() => {
-    if (!investment || goalAmount <= 0) return []
-    let offset = 0
-    return investment.entries.map((e, i) => {
-      const w   = Math.min((e.amount / goalAmount) * 100, 100 - offset)
-      const seg = { id: e.id, left: offset, width: Math.max(0, w), color: INV_COLORS[i % INV_COLORS.length] }
-      offset    = Math.min(100, offset + (e.amount / goalAmount) * 100)
-      return seg
-    })
-  })()
-
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen" style={{ color: "var(--ink)" }}>
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-5">
+    <div style={{ color: "var(--ink)" }} className="space-y-5 py-6">
 
-        {/* ── Header ── */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-3">
-            <button onClick={goBack} className="p-2 rounded-lg transition-colors" style={{ color: "var(--ink-soft)" }}
-              onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.05)")}
-              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15,18 9,12 15,6"/></svg>
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: "var(--font-fraunces, serif)" }}>{y} · Q{q}</h1>
-              <p className="text-xs mt-0.5" style={{ color: "var(--ink-soft)" }}>The long game.</p>
-            </div>
-            <button onClick={goForward} className="p-2 rounded-lg transition-colors" style={{ color: "var(--ink-soft)" }}
-              onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.05)")}
-              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9,18 15,12 9,6"/></svg>
-            </button>
-            {!isCurrent && (
-              <button onClick={goCurrent} className="text-xs px-3 py-1 rounded-full border transition-colors" style={{ borderColor: "rgba(122,34,48,0.35)", color: "var(--burgundy)" }}>
-                Current
-              </button>
-            )}
-          </div>
+      {/* ── Header ── */}
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-2">
+        <div>
+          <div className="text-xs uppercase mb-1" style={{ color: "var(--ink-soft)", letterSpacing: "0.18em" }}>The long game</div>
+          <h1 className="font-display text-3xl md:text-4xl">{y} · Q{q}</h1>
         </div>
+        <div className="flex items-center gap-2">
+          <button onClick={goBack} className="p-2 rounded-lg" style={{ border: "1px solid var(--line)", backgroundColor: "var(--card)", color: "var(--ink-soft)" }}>
+            <ChevronLeft size={18} />
+          </button>
+          {!isCurrent && (
+            <button onClick={goCurrent} className="text-xs font-semibold px-3 py-2 rounded-lg"
+              style={{ border: "1px solid var(--line)", color: "var(--burgundy)", backgroundColor: "var(--card)" }}>
+              Current
+            </button>
+          )}
+          <button onClick={goForward} className="p-2 rounded-lg" style={{ border: "1px solid var(--line)", backgroundColor: "var(--card)", color: "var(--ink-soft)" }}>
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      </div>
 
-        {/* ── Savings ── */}
-        <div className={CARD} style={CARD_STYLE}>
-          <SectionTitle>Savings</SectionTitle>
+      {/* ── Savings + Investments (2-col) ── */}
+      <div className="grid md:grid-cols-2 gap-5">
 
-          <div className="mb-4">
-            <p className="text-4xl font-bold tracking-tight" style={{ fontFamily: "var(--font-fraunces, serif)", color: netSavings >= 0 ? "var(--ink)" : "#DC2626" }}>
-              {fmt$(netSavings)}
-            </p>
-            <p className="text-xs mt-1 space-x-3" style={{ color: "var(--ink-soft)" }}>
-              <span>saved {fmt$(grossSaved)}</span>
-              <span>·</span>
-              <span>spent {fmt$(totalSpent)}</span>
-            </p>
+        {/* Savings */}
+        <div className={CARD} style={CS}>
+          <div className="flex items-center gap-2 mb-4">
+            <PiggyBank size={17} style={{ color: "var(--burgundy)" }} />
+            <span className="font-display text-lg">Savings</span>
           </div>
+
+          <p className="font-display text-4xl mb-1" style={{ color: netSavings >= 0 ? "var(--ink)" : "#DC2626" }}>
+            {fmt$(netSavings)}
+          </p>
+          <p className="text-xs mb-4" style={{ color: "var(--ink-soft)" }}>
+            <span>saved {fmt$(grossSaved)}</span>
+            <span className="mx-2">·</span>
+            <span>spent {fmt$(totalSpent)}</span>
+          </p>
 
           {grossSaved > 0 && (
-            <div className="relative h-4 rounded-full overflow-hidden mb-5" style={{ background: "var(--paper)" }}>
-              <div className="absolute inset-0 rounded-full" style={{
-                backgroundImage: "repeating-linear-gradient(-45deg, rgba(0,0,0,0.06), rgba(0,0,0,0.06) 3px, transparent 3px, transparent 9px)",
-              }} />
-              <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-500" style={{
-                width:      `${netPct}%`,
-                background: "linear-gradient(to right, var(--burgundy), var(--gold))",
-              }} />
+            <div className="relative rounded-full overflow-hidden mb-4" style={{ height: 22, backgroundColor: "var(--line)" }}>
+              <div className="absolute inset-0 ghost-fill" style={{ width: "100%" }} />
+              <div className="absolute left-0 top-0 bottom-0 rounded-full transition-all duration-500"
+                style={{ width: `${netPct}%`, backgroundColor: "var(--burgundy)" }} />
             </div>
           )}
 
           <div className="space-y-1.5 mb-4">
             {savings.map(e => (
               <div key={e.id} className="flex items-center gap-3 group text-sm">
-                <span
-                  className="text-[10px] px-1.5 py-0.5 rounded font-semibold flex-shrink-0"
-                  style={{
-                    background: e.type === "saved" ? "rgba(16,185,129,0.12)" : "rgba(220,38,38,0.1)",
-                    color:      e.type === "saved" ? "#059669"                : "#DC2626",
-                  }}
-                >
+                <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold shrink-0"
+                  style={{ background: e.type === "saved" ? "rgba(16,185,129,0.12)" : "rgba(220,38,38,0.1)", color: e.type === "saved" ? "#059669" : "#DC2626" }}>
                   {e.type === "saved" ? "+" : "−"}
                 </span>
                 <span className="flex-1" style={{ color: "var(--ink-soft)" }}>{e.label}</span>
                 <span className="font-medium tabular-nums">{fmt$(e.amount)}</span>
-                <XBtn onClick={() => deleteSavings(e.id)} />
+                <button onClick={() => deleteSavings(e.id)} className="opacity-0 group-hover:opacity-30 hover:!opacity-70 transition-opacity shrink-0" style={{ color: "var(--ink-soft)" }}>
+                  <X size={12} />
+                </button>
               </div>
             ))}
           </div>
 
           <div className="flex items-center gap-2 flex-wrap pt-3" style={{ borderTop: "1px solid var(--line)" }}>
-            <input value={sLabel} onChange={e => setSLabel(e.target.value)} placeholder="Label…" className="flex-1 min-w-24 rounded-lg px-3 py-1.5 text-sm outline-none" style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
-            <input value={sAmount} onChange={e => setSAmount(e.target.value)} onKeyDown={e => e.key === "Enter" && addSavings()} placeholder="$0" type="number" min="0" className="w-24 rounded-lg px-3 py-1.5 text-sm outline-none" style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
+            <input value={sLabel} onChange={e => setSLabel(e.target.value)} placeholder="Label…"
+              className="flex-1 min-w-24 rounded-lg px-3 py-1.5 text-sm outline-none"
+              style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
+            <input value={sAmount} onChange={e => setSAmount(e.target.value)} onKeyDown={e => e.key === "Enter" && addSavings()} placeholder="$0" type="number" min="0"
+              className="w-20 rounded-lg px-3 py-1.5 text-sm outline-none"
+              style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
             <div className="flex rounded-lg overflow-hidden" style={{ border: "1px solid var(--line)" }}>
               {(["saved","expense"] as const).map(t => (
-                <button key={t} onClick={() => setSType(t)} className="px-3 py-1.5 text-xs font-medium capitalize transition-all" style={{
-                  background: sType === t ? (t === "saved" ? "rgba(16,185,129,0.15)" : "rgba(220,38,38,0.1)") : "transparent",
-                  color:      sType === t ? (t === "saved" ? "#059669"                : "#DC2626")             : "var(--ink-soft)",
-                }}>{t}</button>
+                <button key={t} onClick={() => setSType(t)} className="px-3 py-1.5 text-xs font-medium capitalize transition-all"
+                  style={{ background: sType === t ? (t === "saved" ? "rgba(16,185,129,0.15)" : "rgba(220,38,38,0.1)") : "transparent", color: sType === t ? (t === "saved" ? "#059669" : "#DC2626") : "var(--ink-soft)" }}>
+                  {t}
+                </button>
               ))}
             </div>
-            <button onClick={addSavings} className="px-4 py-1.5 rounded-lg text-xs font-medium text-white" style={{ background: "var(--burgundy)" }}>
-              Add
-            </button>
+            <button onClick={addSavings} className="px-4 py-1.5 rounded-lg text-xs font-medium text-white" style={{ background: "var(--burgundy)" }}>Add</button>
           </div>
         </div>
 
-        {/* ── Investments ── */}
-        <div className={CARD} style={CARD_STYLE}>
-          <div className="flex items-start justify-between mb-4">
-            <SectionTitle>Investments</SectionTitle>
-            <div className="flex items-center gap-1.5 -mt-1">
-              <span className="text-xs" style={{ color: "var(--ink-soft)" }}>Goal</span>
-              <div className="flex items-center">
-                <span className="text-xs mr-0.5" style={{ color: "var(--ink-soft)" }}>$</span>
-                <input
-                  type="number" min="0"
-                  value={investment?.goalAmount || ""}
-                  onChange={e => updateGoalAmount(parseFloat(e.target.value) || 0)}
-                  placeholder="0"
-                  className="w-20 rounded-lg px-2 py-1 text-sm outline-none text-right"
-                  style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }}
-                />
-              </div>
+        {/* Investments */}
+        <div className={CARD} style={CS}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <TrendingUp size={17} style={{ color: "var(--burgundy)" }} />
+              <span className="font-display text-lg">Investments</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs" style={{ color: "var(--ink-soft)" }}>Goal $</span>
+              <input type="number" min="0" value={investment?.goalAmount || ""}
+                onChange={e => updateGoalAmount(parseFloat(e.target.value) || 0)} placeholder="0"
+                className="w-20 rounded-lg px-2 py-1 text-sm outline-none text-right"
+                style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
             </div>
           </div>
 
-          <div className="relative h-5 rounded-full overflow-hidden mb-3" style={{ background: "var(--paper)", border: "1px solid var(--line)" }}>
-            {goalAmount > 0 && invSegments.map(seg => (
-              <div key={seg.id} className="absolute top-0 h-full transition-all duration-500" style={{ left: `${seg.left}%`, width: `${seg.width}%`, background: seg.color }} />
+          <div className="rounded-full overflow-hidden mb-3 flex" style={{ height: 22, backgroundColor: "var(--line)" }}>
+            {goalAmount > 0 && (investment?.entries ?? []).map((e, i) => (
+              <div key={e.id} title={`${e.name}: ${fmt$(e.amount)}`}
+                style={{ width: `${Math.max(0, Math.min((e.amount / goalAmount) * 100, 100))}%`, backgroundColor: INV_COLORS[i % INV_COLORS.length], transition: "width .2s" }} />
             ))}
-            {goalAmount <= 0 && totalInvested > 0 && (
-              <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: "100%", background: INV_COLORS[0] + "80" }} />
-            )}
           </div>
 
           <div className="flex items-center gap-3 mb-4 text-sm">
-            <span className="font-semibold" style={{ fontFamily: "var(--font-fraunces, serif)" }}>{fmt$(totalInvested)}</span>
+            <span className="font-display text-xl">{fmt$(totalInvested)}</span>
             {goalAmount > 0 && (
               <>
                 <span style={{ color: "var(--ink-soft)" }}>of {fmt$(goalAmount)}</span>
@@ -378,198 +339,183 @@ export default function QuarterView() {
           <div className="space-y-2 mb-4">
             {(investment?.entries ?? []).map((e, i) => (
               <div key={e.id} className="flex items-center gap-3 group text-sm">
-                <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: INV_COLORS[i % INV_COLORS.length] }} />
+                <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: INV_COLORS[i % INV_COLORS.length] }} />
                 <span className="flex-1" style={{ color: "var(--ink-soft)" }}>{e.name}</span>
                 <span className="font-medium tabular-nums">{fmt$(e.amount)}</span>
-                {goalAmount > 0 && <span className="text-xs w-10 text-right" style={{ color: "var(--ink-soft)", opacity: 0.6 }}>{((e.amount / goalAmount) * 100).toFixed(0)}%</span>}
-                <XBtn onClick={() => deleteInvEntry(e.id)} />
+                <button onClick={() => deleteInvEntry(e.id)} className="opacity-0 group-hover:opacity-30 hover:!opacity-70 transition-opacity shrink-0" style={{ color: "var(--ink-soft)" }}>
+                  <X size={12} />
+                </button>
               </div>
             ))}
           </div>
 
           <div className="flex gap-2 pt-3" style={{ borderTop: "1px solid var(--line)" }}>
-            <input value={iName} onChange={e => setIName(e.target.value)} placeholder="Stock / fund / portfolio…" className="flex-1 rounded-lg px-3 py-1.5 text-sm outline-none" style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
-            <input value={iAmount} onChange={e => setIAmount(e.target.value)} onKeyDown={e => e.key === "Enter" && addInvEntry()} placeholder="$0" type="number" min="0" className="w-24 rounded-lg px-3 py-1.5 text-sm outline-none" style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
-            <button onClick={addInvEntry} className="px-4 py-1.5 rounded-lg text-xs font-medium text-white" style={{ background: "var(--burgundy)" }}>
-              Add
-            </button>
+            <input value={iName} onChange={e => setIName(e.target.value)} placeholder="Stock / fund / portfolio…"
+              className="flex-1 rounded-lg px-3 py-1.5 text-sm outline-none"
+              style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
+            <input value={iAmount} onChange={e => setIAmount(e.target.value)} onKeyDown={e => e.key === "Enter" && addInvEntry()} placeholder="$0" type="number" min="0"
+              className="w-24 rounded-lg px-3 py-1.5 text-sm outline-none"
+              style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
+            <button onClick={addInvEntry} className="px-4 py-1.5 rounded-lg text-xs font-medium text-white" style={{ background: "var(--burgundy)" }}>Add</button>
           </div>
         </div>
+      </div>
 
-        {/* ── Bigger Goals ── */}
-        <div className={CARD} style={CARD_STYLE}>
-          <SectionTitle>Bigger Goals</SectionTitle>
+      {/* ── Bigger Goals ── */}
+      <div className={CARD} style={CS}>
+        <div className="flex items-center gap-2 mb-4">
+          <Target size={17} style={{ color: "var(--burgundy)" }} />
+          <span className="font-display text-lg">Bigger Goals</span>
+        </div>
 
-          <div className="space-y-5">
-            {goals.map(g => (
+        <div className="space-y-5">
+          {goals.map((g, idx) => {
+            const color = RING_COLORS[idx % RING_COLORS.length]
+            return (
               <div key={g.id} className="group">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">{g.name}</span>
                   <div className="flex items-center gap-3">
-                    <span className="text-xs font-semibold" style={{ color: "var(--burgundy)" }}>{g.progress}%</span>
-                    <XBtn onClick={() => deleteGoal(g.id)} />
-                  </div>
-                </div>
-                <div className="h-2 rounded-full overflow-hidden mb-1.5" style={{ background: "var(--paper)" }}>
-                  <div className="h-full rounded-full transition-all" style={{
-                    width:      `${g.progress}%`,
-                    background: "linear-gradient(to right, var(--burgundy), var(--gold))",
-                  }} />
-                </div>
-                <input
-                  type="range" min={0} max={100} value={g.progress}
-                  onChange={e => updateGoalProgress(g.id, parseInt(e.target.value))}
-                  className="w-full h-1 rounded-full appearance-none cursor-pointer"
-                  style={{ accentColor: "var(--burgundy)" }}
-                />
-              </div>
-            ))}
-          </div>
-
-          <div className="flex gap-2 pt-4 mt-1" style={{ borderTop: "1px solid var(--line)" }}>
-            <input value={gName} onChange={e => setGName(e.target.value)} onKeyDown={e => e.key === "Enter" && addGoal()} placeholder="Add a bigger goal…" className="flex-1 rounded-lg px-3 py-1.5 text-sm outline-none" style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
-            <button onClick={addGoal} className="px-4 py-1.5 rounded-lg text-xs font-medium text-white" style={{ background: "var(--burgundy)" }}>
-              Add
-            </button>
-          </div>
-        </div>
-
-        {/* ── Health ── */}
-        <div className={CARD} style={CARD_STYLE}>
-          <SectionTitle>Health</SectionTitle>
-
-          <div className="space-y-4">
-            {health.map(m => {
-              const pct = m.goalValue > 0 ? Math.min(100, (m.currentValue / m.goalValue) * 100) : 0
-              return (
-                <div key={m.id} className="group">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-sm font-medium">{m.name}</span>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="number"
-                          value={m.currentValue || ""}
-                          onChange={e => updateHealthCurrent(m.id, parseFloat(e.target.value) || 0)}
-                          className="w-16 text-right rounded px-2 py-0.5 text-sm outline-none"
-                          style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }}
-                        />
-                        <span className="text-xs" style={{ color: "var(--ink-soft)" }}>/ {m.goalValue}</span>
-                      </div>
-                      <XBtn onClick={() => deleteHealth(m.id)} />
-                    </div>
-                  </div>
-                  <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--paper)" }}>
-                    <div className="h-full rounded-full health-pulse transition-all" style={{
-                      width:      `${pct}%`,
-                      background: "linear-gradient(to right, #059669, #10B981)",
-                    }} />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-
-          <div className="flex gap-2 flex-wrap pt-4 mt-1" style={{ borderTop: "1px solid var(--line)" }}>
-            <input value={hName} onChange={e => setHName(e.target.value)} placeholder="Metric name…" className="flex-1 min-w-28 rounded-lg px-3 py-1.5 text-sm outline-none" style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
-            <input value={hCurrent} onChange={e => setHCurrent(e.target.value)} placeholder="Current" type="number" className="w-20 rounded-lg px-3 py-1.5 text-sm outline-none" style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
-            <input value={hGoal} onChange={e => setHGoal(e.target.value)} onKeyDown={e => e.key === "Enter" && addHealth()} placeholder="Goal" type="number" className="w-20 rounded-lg px-3 py-1.5 text-sm outline-none" style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
-            <button onClick={addHealth} className="px-4 py-1.5 rounded-lg text-xs font-medium text-white" style={{ background: "var(--burgundy)" }}>
-              Add
-            </button>
-          </div>
-        </div>
-
-        {/* ── Parking Lot ── */}
-        <div className={CARD} style={CARD_STYLE}>
-          <SectionTitle>Parking Lot</SectionTitle>
-
-          <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1">
-            {PARKING_COLS.map(col => {
-              const items = parking.filter(p => p.category === col)
-              return (
-                <div key={col} className="flex-shrink-0 w-44 space-y-2">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider leading-tight" style={{ color: "var(--ink-soft)" }}>{col}</p>
-                    <button
-                      onClick={() => { setAddingCol(addingCol === col ? null : col); setPText(""); setPLink("") }}
-                      className="opacity-50 hover:opacity-100 transition-opacity flex-shrink-0 ml-1"
-                      style={{ color: "var(--burgundy)" }}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                      </svg>
+                    <span className="text-xs font-semibold" style={{ color }}>{g.progress}%</span>
+                    <button onClick={() => deleteGoal(g.id)} className="opacity-0 group-hover:opacity-30 hover:!opacity-70 transition-opacity shrink-0" style={{ color: "var(--ink-soft)" }}>
+                      <X size={12} />
                     </button>
                   </div>
+                </div>
+                <div className="rounded-full overflow-hidden mb-1.5" style={{ height: 10, backgroundColor: "var(--line)" }}>
+                  <div className="h-full rounded-full transition-all"
+                    style={{ width: `${g.progress}%`, background: `linear-gradient(90deg, ${color}, var(--gold))` }} />
+                </div>
+                <input type="range" min={0} max={100} value={g.progress}
+                  onChange={e => updateGoalProgress(g.id, parseInt(e.target.value))}
+                  className="slider w-full mt-1" style={{ accentColor: color }} />
+              </div>
+            )
+          })}
+        </div>
 
-                  {addingCol === col && (
-                    <div className="rounded-xl p-2.5 space-y-1.5" style={{ background: "var(--paper)", border: "1px solid var(--line)" }}>
-                      <input
-                        autoFocus
-                        value={pText}
-                        onChange={e => setPText(e.target.value)}
-                        placeholder="Idea…"
-                        className="w-full bg-transparent text-xs outline-none"
-                        style={{ color: "var(--ink)" }}
-                      />
-                      <input
-                        value={pLink}
-                        onChange={e => setPLink(e.target.value)}
-                        placeholder="Link (optional)"
-                        className="w-full bg-transparent text-xs outline-none pt-1.5"
-                        style={{ borderTop: "1px solid var(--line)", color: "var(--ink)" }}
-                      />
-                      <div className="flex gap-1 pt-0.5">
-                        <button onClick={() => addParking(col)} className="flex-1 text-xs py-1 rounded-md font-medium text-white" style={{ background: "var(--burgundy)" }}>
-                          Add
-                        </button>
-                        <button onClick={() => setAddingCol(null)} className="text-xs px-2 py-1 rounded-md transition-opacity" style={{ background: "var(--line)", color: "var(--ink-soft)" }}>
-                          ✕
-                        </button>
-                      </div>
+        <div className="flex gap-2 pt-4 mt-1" style={{ borderTop: "1px solid var(--line)" }}>
+          <input value={gName} onChange={e => setGName(e.target.value)} onKeyDown={e => e.key === "Enter" && addGoal()} placeholder="Add a bigger goal…"
+            className="flex-1 rounded-lg px-3 py-1.5 text-sm outline-none"
+            style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
+          <button onClick={addGoal} className="px-4 py-1.5 rounded-lg text-xs font-medium text-white" style={{ background: "var(--burgundy)" }}>Add</button>
+        </div>
+      </div>
+
+      {/* ── Health ── */}
+      <div className={CARD} style={CS}>
+        <div className="flex items-center gap-2 mb-4">
+          <HeartPulse size={17} style={{ color: "var(--burgundy)" }} />
+          <span className="font-display text-lg">Health</span>
+        </div>
+
+        <div className="space-y-4">
+          {health.map(m => {
+            const pct = m.goalValue > 0 ? Math.min(100, (m.currentValue / m.goalValue) * 100) : 0
+            return (
+              <div key={m.id} className="group">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-sm font-medium">{m.name}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <input type="number" value={m.currentValue || ""}
+                        onChange={e => updateHealthCurrent(m.id, parseFloat(e.target.value) || 0)}
+                        className="w-16 text-right rounded-md px-2 py-1 text-xs outline-none"
+                        style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
+                      <span className="text-xs" style={{ color: "var(--ink-soft)" }}>/ {m.goalValue}</span>
                     </div>
-                  )}
+                    <button onClick={() => deleteHealth(m.id)} className="opacity-0 group-hover:opacity-30 hover:!opacity-70 transition-opacity shrink-0" style={{ color: "var(--ink-soft)" }}>
+                      <X size={12} />
+                    </button>
+                  </div>
+                </div>
+                <div className="rounded-full overflow-hidden" style={{ height: 12, backgroundColor: "var(--line)" }}>
+                  <div className="h-full pulse-fill rounded-full transition-all"
+                    style={{ width: `${pct}%`, backgroundColor: "#5B7B5A" }} />
+                </div>
+              </div>
+            )
+          })}
+        </div>
 
+        <div className="flex gap-2 flex-wrap pt-4 mt-1" style={{ borderTop: "1px solid var(--line)" }}>
+          <input value={hName} onChange={e => setHName(e.target.value)} placeholder="Metric name…"
+            className="flex-1 min-w-28 rounded-lg px-3 py-1.5 text-sm outline-none"
+            style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
+          <input value={hCurrent} onChange={e => setHCurrent(e.target.value)} placeholder="Current" type="number"
+            className="w-20 rounded-lg px-3 py-1.5 text-sm outline-none"
+            style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
+          <input value={hGoal} onChange={e => setHGoal(e.target.value)} onKeyDown={e => e.key === "Enter" && addHealth()} placeholder="Goal" type="number"
+            className="w-20 rounded-lg px-3 py-1.5 text-sm outline-none"
+            style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
+          <button onClick={addHealth} className="px-4 py-1.5 rounded-lg text-xs font-medium text-white" style={{ background: "var(--burgundy)" }}>Add</button>
+        </div>
+      </div>
+
+      {/* ── Parking Lot ── */}
+      <div className={CARD} style={CS}>
+        <div className="flex items-center gap-2 mb-4">
+          <Lightbulb size={17} style={{ color: "var(--burgundy)" }} />
+          <span className="font-display text-lg">Parking Lot</span>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {PARKING_COLS.map(col => {
+            const items = parking.filter(p => p.category === col)
+            return (
+              <div key={col}>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--ink-soft)" }}>{col}</p>
+                  <button onClick={() => { setAddingCol(addingCol === col ? null : col); setPText(""); setPLink("") }}
+                    className="opacity-50 hover:opacity-100 transition-opacity"
+                    style={{ color: "var(--burgundy)" }}>
+                    <Plus size={13} />
+                  </button>
+                </div>
+
+                {addingCol === col && (
+                  <div className="rounded-xl p-2.5 space-y-1.5 mb-2" style={{ background: "var(--paper)", border: "1px solid var(--line)" }}>
+                    <input autoFocus value={pText} onChange={e => setPText(e.target.value)} placeholder="Idea…"
+                      className="w-full bg-transparent text-xs outline-none" style={{ color: "var(--ink)" }} />
+                    <input value={pLink} onChange={e => setPLink(e.target.value)} placeholder="Link (optional)"
+                      className="w-full bg-transparent text-xs outline-none pt-1.5"
+                      style={{ borderTop: "1px solid var(--line)", color: "var(--ink)" }} />
+                    <div className="flex gap-1 pt-0.5">
+                      <button onClick={() => addParking(col)} className="flex-1 text-xs py-1 rounded-md font-medium text-white" style={{ background: "var(--burgundy)" }}>Add</button>
+                      <button onClick={() => setAddingCol(null)} className="text-xs px-2 py-1 rounded-md" style={{ background: "var(--line)", color: "var(--ink-soft)" }}>✕</button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-2">
                   {items.map(item => (
-                    <div
-                      key={item.id}
-                      className="rounded-xl p-3 group relative"
-                      style={{ background: "var(--paper)", border: "1px solid var(--line)" }}
-                    >
-                      <p className="text-xs leading-relaxed pr-4 mb-2" style={{ color: "var(--ink)" }}>{item.text}</p>
-
+                    <div key={item.id} className="rounded-xl p-3 group relative" style={{ background: "var(--paper)", border: "1px solid var(--line)" }}>
+                      <p className="text-xs leading-relaxed pr-5 mb-1.5" style={{ color: "var(--ink)" }}>{item.text}</p>
                       {item.link && (
-                        <a href={item.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] mb-2 transition-opacity hover:opacity-80" style={{ color: "var(--ink-soft)", opacity: 0.55 }}>
+                        <a href={item.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] mb-1.5 hover:opacity-80" style={{ color: "var(--ink-soft)", opacity: 0.55 }}>
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
                           </svg>
                           Link
                         </a>
                       )}
-
-                      <select
-                        value={item.category}
-                        onChange={e => moveParkingItem(item.id, e.target.value)}
+                      <select value={item.category} onChange={e => moveParkingItem(item.id, e.target.value)}
                         className="w-full text-[10px] rounded px-1.5 py-1 outline-none cursor-pointer"
-                        style={{ background: "var(--card)", color: "var(--ink-soft)", border: "1px solid var(--line)" }}
-                      >
+                        style={{ background: "var(--card)", color: "var(--ink-soft)", border: "1px solid var(--line)" }}>
                         {PARKING_COLS.map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
-
-                      <button onClick={() => deleteParking(item.id)} className="absolute top-2 right-2 opacity-0 group-hover:opacity-30 hover:!opacity-70 transition-opacity" style={{ color: "var(--ink)" }}>
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                        </svg>
+                      <button onClick={() => deleteParking(item.id)} className="absolute top-2 right-2 opacity-0 group-hover:opacity-30 hover:!opacity-70 transition-opacity" style={{ color: "var(--ink-soft)" }}>
+                        <X size={11} />
                       </button>
                     </div>
                   ))}
                 </div>
-              )
-            })}
-          </div>
+              </div>
+            )
+          })}
         </div>
-
       </div>
+
     </div>
   )
 }

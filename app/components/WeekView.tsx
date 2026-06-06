@@ -1,6 +1,10 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
+import {
+  ChevronLeft, ChevronRight, Flag, ClipboardList, CheckSquare,
+  Dumbbell, Briefcase, GraduationCap, StickyNote, Plus, X, Check,
+} from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -19,7 +23,7 @@ interface Note           { id: number; text: string; tag: string | null; created
 
 const DAYS: DayKey[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
-const RING_COLORS = ["#F59E0B", "#EC4899", "#06B6D4", "#8B5CF6", "#10B981", "#F97316"]
+const RING_COLORS = ["#7A2230", "#B0823C", "#4A6C8C", "#5B7B5A", "#B5663F", "#6B4FA0"]
 
 const NOTE_TAGS = [
   "Explore Further",
@@ -30,11 +34,11 @@ const NOTE_TAGS = [
 ]
 
 const TAG_COLORS: Record<string, string> = {
-  "Explore Further":          "#06B6D4",
-  "Brain Wave":               "#8B5CF6",
-  "Interested - On My Mind":  "#F59E0B",
-  "Money Matters":            "#10B981",
-  "Random Musings":           "#EC4899",
+  "Explore Further":         "#06B6D4",
+  "Brain Wave":              "#8B5CF6",
+  "Interested - On My Mind": "#F59E0B",
+  "Money Matters":           "#10B981",
+  "Random Musings":          "#EC4899",
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -65,68 +69,54 @@ function formatWeekRange(monday: Date): string {
 
 function ProgressRing({ progress, color, size = 60 }: { progress: number; color: string; size?: number }) {
   const stroke = 4
-  const r = (size - stroke * 2) / 2
-  const circ = 2 * Math.PI * r
+  const r      = (size - stroke * 2) / 2
+  const circ   = 2 * Math.PI * r
   const offset = circ - (Math.min(100, Math.max(0, progress)) / 100) * circ
-  const c = size / 2
+  const c      = size / 2
   return (
     <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90 absolute inset-0">
         <circle cx={c} cy={c} r={r} fill="none" stroke="var(--line)" strokeWidth={stroke} />
-        <circle
-          cx={c} cy={c} r={r} fill="none" stroke={color} strokeWidth={stroke}
-          strokeLinecap="round"
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          style={{ transition: "stroke-dashoffset 0.4s ease" }}
-        />
+        <circle cx={c} cy={c} r={r} fill="none" stroke={color} strokeWidth={stroke}
+          strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
+          style={{ transition: "stroke-dashoffset 0.4s ease" }} />
       </svg>
-      <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold" style={{ color }}>
+      <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold" style={{ color, fontFamily: "var(--font-hanken, sans-serif)" }}>
         {progress}%
       </span>
     </div>
   )
 }
 
-function Checkbox({ checked, onChange }: { checked: boolean; onChange: () => void }) {
+function CB({ checked, onToggle, color = "var(--burgundy)", dim = "var(--ink-soft)" }: {
+  checked: boolean; onToggle: () => void; color?: string; dim?: string
+}) {
   return (
-    <button
-      onClick={onChange}
-      className="flex-shrink-0 w-[18px] h-[18px] rounded-[4px] border-2 flex items-center justify-center transition-all duration-150"
-      style={{
-        borderColor: checked ? "var(--burgundy)" : "var(--line)",
-        background:  checked ? "var(--burgundy)" : "transparent",
-      }}
-    >
-      {checked && (
-        <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
-          <path d="M1 3.5L3 5.5L8 1" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      )}
+    <button onClick={onToggle} className="shrink-0">
+      <span className="w-4 h-4 rounded-md flex items-center justify-center" style={{
+        border:          `1.5px solid ${checked ? color : dim}`,
+        backgroundColor: checked ? color : "transparent",
+        display:         "inline-flex",
+      }}>
+        {checked && <Check size={11} color="#fff" />}
+      </span>
     </button>
   )
 }
 
-function PlusIcon() {
+function NavBtn({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
+    <button onClick={onClick} className="p-2 rounded-lg"
+      style={{ border: "1px solid var(--line)", backgroundColor: "var(--card)", color: "var(--ink-soft)" }}>
+      {children}
+    </button>
   )
 }
 
-function XIcon({ size = 13 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
-  )
-}
-
-// ─── Shared card style ─────────────────────────────────────────────────────────
+// ─── Shared card style ────────────────────────────────────────────────────────
 
 const CARD = "rounded-2xl p-5 border"
-const CARD_STYLE = { background: "var(--card)", borderColor: "var(--line)" }
+const CS   = { background: "var(--card)", borderColor: "var(--line)", boxShadow: "0 1px 3px rgba(40,20,24,0.05)" }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -138,13 +128,11 @@ export default function WeekView() {
   const [goals,       setGoals]       = useState<Goal[]>([])
   const [tasks,       setTasks]       = useState<Task[]>([])
   const [chores,      setChores]      = useState<Chore[]>([])
-
-  const [habits,    setHabits]    = useState<Habit[]>([])
-  const [habitDays, setHabitDays] = useState<HabitDay[]>([])
-
-  const [deliverables, setDeliverables] = useState<Deliverable[]>([])
-  const [upskilling,   setUpskilling]   = useState<UpskillingItem[]>([])
-  const [notes,        setNotes]        = useState<Note[]>([])
+  const [habits,      setHabits]      = useState<Habit[]>([])
+  const [habitDays,   setHabitDays]   = useState<HabitDay[]>([])
+  const [deliverables,setDeliverables]= useState<Deliverable[]>([])
+  const [upskilling,  setUpskilling]  = useState<UpskillingItem[]>([])
+  const [notes,       setNotes]       = useState<Note[]>([])
 
   const [noteFilter,     setNoteFilter]     = useState("All")
   const [openTagNote,    setOpenTagNote]    = useState<number | null>(null)
@@ -161,8 +149,6 @@ export default function WeekView() {
   const focusRef       = useRef<HTMLTextAreaElement>(null)
   const focusTimer     = useRef<ReturnType<typeof setTimeout> | null>(null)
   const progressTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({})
-
-  // ─── Celebration ───────────────────────────────────────────────────────────
 
   const celebrate = useCallback(() => {
     window.dispatchEvent(new CustomEvent("f1-celebrate"))
@@ -191,16 +177,12 @@ export default function WeekView() {
       .finally(() => setLoading(false))
   }, [currentMonday])
 
-  // ─── Load globals (once) ───────────────────────────────────────────────────
-
   useEffect(() => {
     fetch("/api/habits").then(r => r.json()).then(setHabits)
     fetch("/api/deliverables").then(r => r.json()).then(setDeliverables)
     fetch("/api/upskilling").then(r => r.json()).then(setUpskilling)
     fetch("/api/notes").then(r => r.json()).then(setNotes)
   }, [])
-
-  // ─── Auto-grow textarea ────────────────────────────────────────────────────
 
   useEffect(() => {
     const el = focusRef.current
@@ -313,8 +295,8 @@ export default function WeekView() {
     if (newDone) celebrate()
   }
 
-  const isHabitDone  = (habitId: number, day: DayKey) => habitDays.find(hd => hd.habitId === habitId && hd.day === day)?.done ?? false
-  const habitCount   = (habitId: number) => DAYS.filter(d => isHabitDone(habitId, d)).length
+  const isHabitDone = (habitId: number, day: DayKey) => habitDays.find(hd => hd.habitId === habitId && hd.day === day)?.done ?? false
+  const habitCount  = (habitId: number) => DAYS.filter(d => isHabitDone(habitId, d)).length
 
   // ─── Deliverables ──────────────────────────────────────────────────────────
 
@@ -328,9 +310,8 @@ export default function WeekView() {
   const updateDelivProgress = (id: number, progress: number) => {
     setDeliverables(ds => ds.map(d => d.id === id ? { ...d, progress } : d))
     if (progressTimers.current[id]) clearTimeout(progressTimers.current[id])
-    progressTimers.current[id] = setTimeout(() => {
-      fetch(`/api/deliverables/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ progress }) })
-    }, 400)
+    progressTimers.current[id] = setTimeout(() =>
+      fetch(`/api/deliverables/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ progress }) }), 400)
   }
 
   const deleteDeliverable = async (id: number) => {
@@ -344,16 +325,14 @@ export default function WeekView() {
     if (!newUpskillName.trim() || !newUpskillProv.trim()) return
     const item: UpskillingItem = await fetch("/api/upskilling", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: newUpskillName.trim(), provider: newUpskillProv.trim() }) }).then(r => r.json())
     setUpskilling(us => [...us, item])
-    setNewUpskillName("")
-    setNewUpskillProv("")
+    setNewUpskillName(""); setNewUpskillProv("")
   }
 
   const updateUpskillProgress = (id: number, progress: number) => {
     setUpskilling(us => us.map(u => u.id === id ? { ...u, progress } : u))
     if (progressTimers.current[id]) clearTimeout(progressTimers.current[id])
-    progressTimers.current[id] = setTimeout(() => {
-      fetch(`/api/upskilling/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ progress }) })
-    }, 400)
+    progressTimers.current[id] = setTimeout(() =>
+      fetch(`/api/upskilling/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ progress }) }), 400)
   }
 
   const deleteUpskilling = async (id: number) => {
@@ -383,9 +362,9 @@ export default function WeekView() {
 
   // ─── Derived ───────────────────────────────────────────────────────────────
 
-  const todayMonday   = getMonday(new Date())
-  const isCurrentWeek = toDateStr(todayMonday) === toDateStr(currentMonday)
-  const todayDayIndex = isCurrentWeek ? (new Date().getDay() + 6) % 7 : -1
+  const todayMonday    = getMonday(new Date())
+  const isCurrentWeek  = toDateStr(todayMonday) === toDateStr(currentMonday)
+  const todayDayIndex  = isCurrentWeek ? (new Date().getDay() + 6) % 7 : -1
 
   const filteredNotes = notes.filter(n => {
     if (noteFilter === "All")      return true
@@ -393,20 +372,21 @@ export default function WeekView() {
     return n.tag === noteFilter
   })
 
-  // ─── Add input helper ──────────────────────────────────────────────────────
+  // ─── Add-row helper ────────────────────────────────────────────────────────
 
   const addRow = (value: string, setValue: (v: string) => void, onAdd: () => void, placeholder: string) => (
-    <div className="flex items-center gap-2 pt-1">
+    <div className="flex items-center gap-2 mt-3">
       <input
         value={value}
         onChange={e => setValue(e.target.value)}
         onKeyDown={e => e.key === "Enter" && onAdd()}
         placeholder={placeholder}
-        className="flex-1 bg-transparent text-sm outline-none border-b pb-1"
-        style={{ borderColor: "var(--line)", color: "var(--ink)" }}
+        className="flex-1 min-w-0 text-sm rounded-lg px-3 py-2 outline-none"
+        style={{ backgroundColor: "var(--paper)", border: "1px solid var(--line)", color: "var(--ink)" }}
       />
-      <button onClick={onAdd} className="flex-shrink-0 transition-colors" style={{ color: "var(--burgundy)" }}>
-        <PlusIcon />
+      <button onClick={onAdd} className="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center"
+        style={{ backgroundColor: "var(--burgundy)", color: "#fff" }}>
+        <Plus size={15} />
       </button>
     </div>
   )
@@ -414,375 +394,323 @@ export default function WeekView() {
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen" style={{ color: "var(--ink)" }}>
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-5">
+    <div style={{ color: "var(--ink)" }} className="space-y-5 py-6">
 
-        {/* ── Navigation ── */}
-        <div className="flex items-center justify-between mb-2">
-          <button onClick={prevWeek} className="p-2 rounded-lg transition-colors" style={{ color: "var(--ink-soft)" }}
-            onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.05)")}
-            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15,18 9,12 15,6" />
-            </svg>
-          </button>
-          <div className="flex items-center gap-3">
-            <h1
-              className="text-xl font-semibold tracking-wide"
-              style={{ fontFamily: "var(--font-fraunces, serif)" }}
-            >
-              {formatWeekRange(currentMonday)}
-            </h1>
-            {!isCurrentWeek && (
-              <button
-                onClick={goToday}
-                className="text-xs px-3 py-1 rounded-full border transition-colors"
-                style={{ borderColor: "rgba(122,34,48,0.35)", color: "var(--burgundy)" }}
-              >
-                Today
-              </button>
-            )}
+      {/* ── Week header ── */}
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-2">
+        <div>
+          <div className="text-xs uppercase mb-1" style={{ color: "var(--ink-soft)", letterSpacing: "0.18em" }}>
+            {isCurrentWeek ? "This week" : "Week of"}
           </div>
-          <button onClick={nextWeek} className="p-2 rounded-lg transition-colors" style={{ color: "var(--ink-soft)" }}
-            onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.05)")}
-            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9,18 15,12 9,6" />
-            </svg>
-          </button>
+          <h1 className="font-display text-3xl md:text-4xl">{formatWeekRange(currentMonday)}</h1>
         </div>
+        <div className="flex items-center gap-2">
+          <NavBtn onClick={prevWeek}><ChevronLeft size={18} /></NavBtn>
+          {!isCurrentWeek && (
+            <button onClick={goToday} className="text-xs font-semibold px-3 py-2 rounded-lg"
+              style={{ border: "1px solid var(--line)", color: "var(--burgundy)", backgroundColor: "var(--card)" }}>
+              Today
+            </button>
+          )}
+          <NavBtn onClick={nextWeek}><ChevronRight size={18} /></NavBtn>
+        </div>
+      </div>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-20 text-sm" style={{ color: "var(--ink-soft)" }}>Loading…</div>
-        ) : (
-          <>
-            {/* ── Weekly Focus ── */}
-            <div
-              className="rounded-2xl p-6"
-              style={{ background: "radial-gradient(at 88% 12%, rgba(176,130,60,0.3), transparent 50%), linear-gradient(135deg,#7A2230,#4a1520)" }}
-            >
-              <p className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: "rgba(255,255,255,0.5)" }}>Weekly Focus</p>
-              <textarea
-                ref={focusRef}
-                value={weeklyFocus}
-                onChange={e => handleFocusChange(e.target.value)}
-                placeholder="What is this week really about?"
-                rows={1}
-                className="w-full bg-transparent text-white text-2xl font-bold resize-none outline-none leading-tight overflow-hidden"
-                style={{ fontFamily: "var(--font-fraunces, serif)", minHeight: "2.5rem" }}
-              />
+      {loading ? (
+        <div className="flex items-center justify-center py-20 text-sm" style={{ color: "var(--ink-soft)" }}>Loading…</div>
+      ) : (
+        <>
+          {/* ── Weekly Focus ── */}
+          <div className="focus-box rounded-2xl p-6" style={{ color: "#FBF6EE" }}>
+            <div className="flex items-center gap-2 mb-3">
+              <Flag size={17} style={{ color: "var(--gold)" }} />
+              <span className="font-display text-lg">Weekly focus</span>
+            </div>
+            <textarea
+              ref={focusRef}
+              value={weeklyFocus}
+              onChange={e => handleFocusChange(e.target.value)}
+              placeholder="What is this week really about?"
+              rows={1}
+              className="light-ph w-full bg-transparent text-xl resize-none outline-none leading-tight overflow-hidden mb-4 font-display"
+              style={{ color: "#FBF6EE", borderBottom: "1px solid rgba(255,255,255,0.25)", paddingBottom: "0.5rem", minHeight: "2.5rem" }}
+            />
 
-              <div className="mt-5 space-y-2">
-                {goals.map(g => (
-                  <div key={g.id} className="flex items-center gap-3 group">
-                    <Checkbox checked={g.done} onChange={() => toggleGoal(g)} />
-                    <span className={`flex-1 text-sm leading-relaxed text-white ${g.done ? "line-through opacity-40" : ""}`}>{g.text}</span>
-                    <button onClick={() => deleteGoal(g.id)} className="opacity-0 group-hover:opacity-40 hover:!opacity-80 transition-opacity text-white">
-                      <XIcon />
+            <div className="space-y-2">
+              {goals.map(g => (
+                <div key={g.id} className="flex items-center gap-3 group">
+                  <CB checked={g.done} onToggle={() => toggleGoal(g)} color="var(--gold)" dim="rgba(251,246,238,0.6)" />
+                  <span className={`flex-1 text-sm leading-relaxed ${g.done ? "line-through opacity-60" : ""}`}>{g.text}</span>
+                  <button onClick={() => deleteGoal(g.id)} className="opacity-0 group-hover:opacity-40 hover:!opacity-80 transition-opacity">
+                    <X size={13} />
+                  </button>
+                </div>
+              ))}
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  value={newGoalText}
+                  onChange={e => setNewGoalText(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && addGoal()}
+                  placeholder="Add a goal…"
+                  className="light-ph flex-1 bg-transparent text-sm outline-none border-b pb-1"
+                  style={{ borderColor: "rgba(255,255,255,0.25)", color: "#FBF6EE" }}
+                />
+                <button onClick={addGoal} className="shrink-0 opacity-70 hover:opacity-100 transition-opacity">
+                  <Plus size={15} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Tasks + Chores ── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className={CARD} style={CS}>
+              <div className="flex items-center gap-2 mb-4">
+                <ClipboardList size={17} style={{ color: "var(--burgundy)" }} />
+                <span className="font-display text-lg">Tasks</span>
+              </div>
+              <div className="space-y-2.5">
+                {tasks.map(t => (
+                  <div key={t.id} className="flex items-center gap-3 group">
+                    <CB checked={t.done} onToggle={() => toggleTask(t)} />
+                    <span className={`flex-1 text-sm ${t.done ? "line-through opacity-40" : ""}`} style={{ color: "var(--ink)" }}>{t.title}</span>
+                    <button onClick={() => deleteTask(t.id)} className="opacity-0 group-hover:opacity-30 hover:!opacity-70 transition-opacity" style={{ color: "var(--ink-soft)" }}>
+                      <X size={13} />
                     </button>
                   </div>
                 ))}
-                <div className="flex items-center gap-2 pt-1">
-                  <input
-                    value={newGoalText}
-                    onChange={e => setNewGoalText(e.target.value)}
-                    onKeyDown={e => e.key === "Enter" && addGoal()}
-                    placeholder="Add a goal…"
-                    className="flex-1 bg-transparent text-sm outline-none border-b pb-1 text-white"
-                    style={{ borderColor: "rgba(255,255,255,0.2)" }}
-                  />
-                  <button onClick={addGoal} className="flex-shrink-0 text-white opacity-60 hover:opacity-100 transition-opacity">
-                    <PlusIcon />
-                  </button>
-                </div>
               </div>
+              {addRow(newTaskText, setNewTaskText, addTask, "Add task…")}
             </div>
 
-            {/* ── Tasks + Chores ── */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className={CARD} style={CARD_STYLE}>
-                <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--ink-soft)" }}>Tasks</p>
-                <div className="space-y-2">
-                  {tasks.map(t => (
-                    <div key={t.id} className="flex items-center gap-3 group">
-                      <Checkbox checked={t.done} onChange={() => toggleTask(t)} />
-                      <span className={`flex-1 text-sm ${t.done ? "line-through opacity-40" : ""}`}>{t.title}</span>
-                      <button onClick={() => deleteTask(t.id)} className="opacity-0 group-hover:opacity-30 hover:!opacity-70 transition-opacity" style={{ color: "var(--ink)" }}>
-                        <XIcon />
-                      </button>
-                    </div>
-                  ))}
-                  {addRow(newTaskText, setNewTaskText, addTask, "Add task…")}
-                </div>
+            <div className={CARD} style={CS}>
+              <div className="flex items-center gap-2 mb-4">
+                <CheckSquare size={17} style={{ color: "var(--burgundy)" }} />
+                <span className="font-display text-lg">Chores</span>
               </div>
-
-              <div className={CARD} style={CARD_STYLE}>
-                <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--ink-soft)" }}>Chores</p>
-                <div className="space-y-2">
-                  {chores.map(c => (
-                    <div key={c.id} className="flex items-center gap-3 group">
-                      <Checkbox checked={c.done} onChange={() => toggleChore(c)} />
-                      <span className={`flex-1 text-sm ${c.done ? "line-through opacity-40" : ""}`}>{c.title}</span>
-                      <button onClick={() => deleteChore(c.id)} className="opacity-0 group-hover:opacity-30 hover:!opacity-70 transition-opacity" style={{ color: "var(--ink)" }}>
-                        <XIcon />
-                      </button>
-                    </div>
-                  ))}
-                  {addRow(newChoreText, setNewChoreText, addChore, "Add chore…")}
-                </div>
+              <div className="space-y-2.5">
+                {chores.map(c => (
+                  <div key={c.id} className="flex items-center gap-3 group">
+                    <CB checked={c.done} onToggle={() => toggleChore(c)} />
+                    <span className={`flex-1 text-sm ${c.done ? "line-through opacity-40" : ""}`} style={{ color: "var(--ink)" }}>{c.title}</span>
+                    <button onClick={() => deleteChore(c.id)} className="opacity-0 group-hover:opacity-30 hover:!opacity-70 transition-opacity" style={{ color: "var(--ink-soft)" }}>
+                      <X size={13} />
+                    </button>
+                  </div>
+                ))}
               </div>
+              {addRow(newChoreText, setNewChoreText, addChore, "Add chore…")}
             </div>
+          </div>
 
-            {/* ── Routines & Gym ── */}
-            <div className={CARD} style={CARD_STYLE}>
-              <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--ink-soft)" }}>Routines &amp; Gym</p>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr>
-                      <th className="text-left pb-3 pr-4 text-xs font-normal w-32" style={{ color: "var(--ink-soft)", opacity: 0.5 }} />
-                      {DAYS.map((day, i) => (
-                        <th
-                          key={day}
-                          className="pb-3 text-xs font-semibold text-center w-10"
-                          style={{ color: i === todayDayIndex ? "var(--burgundy)" : "var(--ink-soft)" }}
-                        >
-                          {day}
-                        </th>
-                      ))}
-                      <th className="pb-3 text-xs font-normal pl-3 text-right" style={{ color: "var(--ink-soft)", opacity: 0.5 }}>/7</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {habits.map(habit => (
-                      <tr key={habit.id} className="group">
-                        <td className="py-1.5 pr-4">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">{habit.name}</span>
-                            <button onClick={() => deleteHabit(habit.id)} className="opacity-0 group-hover:opacity-25 hover:!opacity-60 transition-opacity" style={{ color: "var(--ink)" }}>
-                              <XIcon size={11} />
-                            </button>
-                          </div>
-                        </td>
-                        {DAYS.map((day, i) => {
-                          const done    = isHabitDone(habit.id, day)
-                          const isToday = i === todayDayIndex
-                          return (
-                            <td key={day} className="py-1.5 text-center">
-                              <button
-                                onClick={() => toggleHabitDay(habit.id, day)}
-                                className="w-8 h-8 rounded-lg mx-auto flex items-center justify-center transition-all duration-150"
-                                style={{
-                                  background: done    ? "var(--burgundy)"
-                                            : isToday ? "rgba(122,34,48,0.1)"
-                                            :           "var(--paper)",
-                                  border: isToday && !done ? "1px solid rgba(122,34,48,0.3)" : "1px solid transparent",
-                                }}
-                              >
-                                {done && (
-                                  <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
-                                    <path d="M1 4.5L3.5 7L10 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                                  </svg>
-                                )}
-                              </button>
-                            </td>
-                          )
-                        })}
-                        <td className="py-1.5 pl-3 text-sm font-bold text-right" style={{ color: "var(--gold)" }}>
-                          {habitCount(habit.id)}
-                        </td>
-                      </tr>
+          {/* ── Routines & Gym ── */}
+          <div className={CARD} style={CS}>
+            <div className="flex items-center gap-2 mb-4">
+              <Dumbbell size={17} style={{ color: "var(--burgundy)" }} />
+              <span className="font-display text-lg">Routines &amp; Gym</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr>
+                    <th className="text-left pb-3 pr-4 text-xs font-normal w-32" style={{ color: "var(--ink-soft)", opacity: 0.5 }} />
+                    {DAYS.map((day, i) => (
+                      <th key={day} className="pb-3 text-xs font-semibold text-center w-10"
+                        style={{ color: i === todayDayIndex ? "var(--burgundy)" : "var(--ink-soft)" }}>
+                        {day}
+                      </th>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--line)" }}>
-                {addRow(newHabitName, setNewHabitName, addHabit, "Add habit…")}
-              </div>
+                    <th className="pb-3 text-xs font-normal pl-3 text-right" style={{ color: "var(--ink-soft)", opacity: 0.5 }}>/7</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {habits.map(habit => (
+                    <tr key={habit.id} className="group">
+                      <td className="py-1.5 pr-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">{habit.name}</span>
+                          <button onClick={() => deleteHabit(habit.id)} className="opacity-0 group-hover:opacity-25 hover:!opacity-60 transition-opacity" style={{ color: "var(--ink-soft)" }}>
+                            <X size={11} />
+                          </button>
+                        </div>
+                      </td>
+                      {DAYS.map((day, i) => {
+                        const done    = isHabitDone(habit.id, day)
+                        const isToday = i === todayDayIndex
+                        return (
+                          <td key={day} className="py-1.5 text-center">
+                            <button
+                              onClick={() => toggleHabitDay(habit.id, day)}
+                              className="w-7 h-7 rounded-lg mx-auto flex items-center justify-center transition-all duration-150"
+                              style={{
+                                background: done    ? "var(--burgundy)"
+                                          : isToday ? "rgba(122,34,48,0.1)"
+                                          :           "var(--paper)",
+                                border: isToday && !done ? "1px solid rgba(122,34,48,0.3)" : "1px solid transparent",
+                              }}
+                            >
+                              {done && <Check size={12} color="#fff" />}
+                            </button>
+                          </td>
+                        )
+                      })}
+                      <td className="py-1.5 pl-3 text-sm font-bold text-right" style={{ color: "var(--gold)" }}>
+                        {habitCount(habit.id)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
+            <div className="mt-2 pt-3" style={{ borderTop: "1px solid var(--line)" }}>
+              {addRow(newHabitName, setNewHabitName, addHabit, "Add habit…")}
+            </div>
+          </div>
 
-            {/* ── Work Deliverables ── */}
-            <div className={CARD} style={CARD_STYLE}>
-              <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--ink-soft)" }}>Work Deliverables</p>
+          {/* ── Work Deliverables + Upskilling ── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className={CARD} style={CS}>
+              <div className="flex items-center gap-2 mb-4">
+                <Briefcase size={17} style={{ color: "var(--burgundy)" }} />
+                <span className="font-display text-lg">Work Deliverables</span>
+              </div>
               <div className="space-y-4">
                 {deliverables.map((d, i) => {
                   const color = RING_COLORS[i % RING_COLORS.length]
                   return (
-                    <div key={d.id} className="flex items-center gap-4 group">
+                    <div key={d.id} className="flex items-center gap-3 group">
                       <ProgressRing progress={d.progress} color={color} />
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center justify-between mb-1.5">
                           <span className="text-sm font-medium truncate">{d.name}</span>
-                          <button onClick={() => deleteDeliverable(d.id)} className="opacity-0 group-hover:opacity-25 hover:!opacity-70 transition-opacity ml-2 flex-shrink-0" style={{ color: "var(--ink)" }}>
-                            <XIcon />
+                          <button onClick={() => deleteDeliverable(d.id)} className="opacity-0 group-hover:opacity-25 hover:!opacity-70 transition-opacity ml-2 shrink-0" style={{ color: "var(--ink-soft)" }}>
+                            <X size={13} />
                           </button>
                         </div>
-                        <input
-                          type="range" min={0} max={100} value={d.progress}
+                        <input type="range" min={0} max={100} value={d.progress}
                           onChange={e => updateDelivProgress(d.id, parseInt(e.target.value))}
-                          className="w-full h-1 rounded-full appearance-none cursor-pointer"
-                          style={{ accentColor: color }}
-                        />
+                          className="slider w-full" style={{ accentColor: color }} />
                       </div>
                     </div>
                   )
                 })}
-                {addRow(newDelivName, setNewDelivName, addDeliverable, "Add deliverable…")}
               </div>
+              {addRow(newDelivName, setNewDelivName, addDeliverable, "Add deliverable…")}
             </div>
 
-            {/* ── Upskilling ── */}
-            <div className={CARD} style={CARD_STYLE}>
-              <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--ink-soft)" }}>Upskilling</p>
+            <div className={CARD} style={CS}>
+              <div className="flex items-center gap-2 mb-4">
+                <GraduationCap size={17} style={{ color: "var(--burgundy)" }} />
+                <span className="font-display text-lg">Upskilling</span>
+              </div>
               <div className="space-y-4">
                 {upskilling.map((u, i) => {
                   const color = RING_COLORS[(i + 3) % RING_COLORS.length]
                   return (
-                    <div key={u.id} className="flex items-center gap-4 group">
+                    <div key={u.id} className="flex items-center gap-3 group">
                       <ProgressRing progress={u.progress} color={color} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-0.5">
                           <span className="text-sm font-medium truncate">{u.name}</span>
-                          <button onClick={() => deleteUpskilling(u.id)} className="opacity-0 group-hover:opacity-25 hover:!opacity-70 transition-opacity ml-2 flex-shrink-0" style={{ color: "var(--ink)" }}>
-                            <XIcon />
+                          <button onClick={() => deleteUpskilling(u.id)} className="opacity-0 group-hover:opacity-25 hover:!opacity-70 transition-opacity ml-2 shrink-0" style={{ color: "var(--ink-soft)" }}>
+                            <X size={13} />
                           </button>
                         </div>
-                        <p className="text-xs mb-2" style={{ color: "var(--ink-soft)" }}>{u.provider}</p>
-                        <input
-                          type="range" min={0} max={100} value={u.progress}
+                        <p className="text-xs mb-1.5" style={{ color: "var(--ink-soft)" }}>{u.provider}</p>
+                        <input type="range" min={0} max={100} value={u.progress}
                           onChange={e => updateUpskillProgress(u.id, parseInt(e.target.value))}
-                          className="w-full h-1 rounded-full appearance-none cursor-pointer"
-                          style={{ accentColor: color }}
-                        />
+                          className="slider w-full" style={{ accentColor: color }} />
                       </div>
                     </div>
                   )
                 })}
-                <div className="flex items-end gap-2 pt-1">
-                  <div className="flex-1 space-y-2">
-                    <input
-                      value={newUpskillName}
-                      onChange={e => setNewUpskillName(e.target.value)}
-                      placeholder="Skill name…"
-                      className="w-full bg-transparent text-sm outline-none border-b pb-1"
-                      style={{ borderColor: "var(--line)", color: "var(--ink)" }}
-                    />
-                    <input
-                      value={newUpskillProv}
-                      onChange={e => setNewUpskillProv(e.target.value)}
-                      onKeyDown={e => e.key === "Enter" && addUpskilling()}
-                      placeholder="Provider (e.g. Coursera)…"
-                      className="w-full bg-transparent text-sm outline-none border-b pb-1"
-                      style={{ borderColor: "var(--line)", color: "var(--ink)" }}
-                    />
-                  </div>
-                  <button onClick={addUpskilling} className="pb-1 flex-shrink-0 transition-colors" style={{ color: "var(--burgundy)" }}>
-                    <PlusIcon />
-                  </button>
+              </div>
+              <div className="flex items-end gap-2 mt-3">
+                <div className="flex-1 space-y-2">
+                  <input value={newUpskillName} onChange={e => setNewUpskillName(e.target.value)} placeholder="Skill name…"
+                    className="w-full text-sm rounded-lg px-3 py-2 outline-none"
+                    style={{ backgroundColor: "var(--paper)", border: "1px solid var(--line)", color: "var(--ink)" }} />
+                  <input value={newUpskillProv} onChange={e => setNewUpskillProv(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && addUpskilling()} placeholder="Provider (e.g. Coursera)…"
+                    className="w-full text-sm rounded-lg px-3 py-2 outline-none"
+                    style={{ backgroundColor: "var(--paper)", border: "1px solid var(--line)", color: "var(--ink)" }} />
                 </div>
-              </div>
-            </div>
-
-            {/* ── Notes to Self ── */}
-            <div className={CARD} style={CARD_STYLE}>
-              <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--ink-soft)" }}>Notes to Self</p>
-
-              {/* Filter chips */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                {["All", "Untagged", ...NOTE_TAGS].map(f => (
-                  <button
-                    key={f}
-                    onClick={() => setNoteFilter(f)}
-                    className="text-xs px-3 py-1 rounded-full transition-all"
-                    style={{
-                      background: noteFilter === f ? (TAG_COLORS[f] ?? "var(--burgundy)") + "22" : "var(--paper)",
-                      border:    `1px solid ${noteFilter === f ? (TAG_COLORS[f] ?? "var(--burgundy)") + "55" : "var(--line)"}`,
-                      color:      noteFilter === f ? (TAG_COLORS[f] ?? "var(--burgundy)") : "var(--ink-soft)",
-                    }}
-                  >
-                    {f}
-                  </button>
-                ))}
-              </div>
-
-              {/* Capture */}
-              <div className="flex items-center gap-2 mb-5">
-                <input
-                  value={newNoteText}
-                  onChange={e => setNewNoteText(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && addNote()}
-                  placeholder="Capture a thought…"
-                  className="flex-1 bg-transparent text-sm outline-none border-b pb-1"
-                  style={{ borderColor: "var(--line)", color: "var(--ink)" }}
-                />
-                <button onClick={addNote} className="transition-colors" style={{ color: "var(--burgundy)" }}>
-                  <PlusIcon />
+                <button onClick={addUpskilling} className="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: "var(--burgundy)", color: "#fff" }}>
+                  <Plus size={15} />
                 </button>
               </div>
+            </div>
+          </div>
 
-              {/* Note cards */}
-              <div className="space-y-3">
-                {filteredNotes.map(note => (
-                  <div
-                    key={note.id}
-                    className="rounded-xl p-4 relative group"
-                    style={{
-                      background:  "var(--paper)",
-                      borderLeft: `3px solid ${note.tag ? (TAG_COLORS[note.tag] ?? "var(--gold)") : "var(--line)"}`,
-                    }}
-                  >
-                    <p className="text-sm leading-relaxed pr-7">{note.text}</p>
-
-                    <button
-                      onClick={() => deleteNote(note.id)}
-                      className="absolute top-3 right-3 opacity-0 group-hover:opacity-25 hover:!opacity-70 transition-opacity"
-                      style={{ color: "var(--ink)" }}
-                    >
-                      <XIcon />
-                    </button>
-
-                    <div className="mt-2">
-                      {note.tag ? (
-                        <span
-                          className="inline-block text-xs px-2 py-0.5 rounded-full"
-                          style={{ background: (TAG_COLORS[note.tag] ?? "var(--gold)") + "20", color: TAG_COLORS[note.tag] ?? "var(--gold)" }}
-                        >
-                          {note.tag}
-                        </span>
-                      ) : openTagNote === note.id ? (
-                        <div className="flex flex-wrap gap-1.5 mt-1">
-                          {NOTE_TAGS.map(t => (
-                            <button
-                              key={t}
-                              onClick={() => addNoteTag(note.id, t)}
-                              className="text-xs px-2 py-0.5 rounded-full transition-all hover:opacity-100"
-                              style={{ background: TAG_COLORS[t] + "20", color: TAG_COLORS[t], border: `1px solid ${TAG_COLORS[t]}40` }}
-                            >
-                              {t}
-                            </button>
-                          ))}
-                          <button onClick={() => setOpenTagNote(null)} className="text-xs ml-1 transition-opacity" style={{ color: "var(--ink-soft)", opacity: 0.5 }}>Cancel</button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setOpenTagNote(note.id)}
-                          className="text-xs transition-opacity hover:opacity-80"
-                          style={{ color: "var(--gold)", opacity: 0.55 }}
-                        >
-                          + Add tag
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
+          {/* ── Notes to Self ── */}
+          <div className={CARD} style={CS}>
+            <div className="flex items-center gap-2 mb-4">
+              <StickyNote size={17} style={{ color: "var(--burgundy)" }} />
+              <span className="font-display text-lg">Notes to Self</span>
             </div>
 
-          </>
-        )}
-      </div>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {["All", "Untagged", ...NOTE_TAGS].map(f => (
+                <button key={f} onClick={() => setNoteFilter(f)} className="text-xs px-3 py-1 rounded-full transition-all"
+                  style={{
+                    background: noteFilter === f ? (TAG_COLORS[f] ?? "var(--burgundy)") + "22" : "var(--paper)",
+                    border:    `1px solid ${noteFilter === f ? (TAG_COLORS[f] ?? "var(--burgundy)") + "55" : "var(--line)"}`,
+                    color:      noteFilter === f ? (TAG_COLORS[f] ?? "var(--burgundy)") : "var(--ink-soft)",
+                  }}>
+                  {f}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2 mb-5">
+              <input value={newNoteText} onChange={e => setNewNoteText(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && addNote()} placeholder="Capture a thought…"
+                className="flex-1 text-sm rounded-lg px-3 py-2 outline-none"
+                style={{ backgroundColor: "var(--paper)", border: "1px solid var(--line)", color: "var(--ink)" }} />
+              <button onClick={addNote} className="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: "var(--burgundy)", color: "#fff" }}>
+                <Plus size={15} />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {filteredNotes.map(note => (
+                <div key={note.id} className="rounded-xl p-4 relative group"
+                  style={{ background: "var(--paper)", borderLeft: `3px solid ${note.tag ? (TAG_COLORS[note.tag] ?? "var(--gold)") : "var(--line)"}` }}>
+                  <p className="text-sm leading-relaxed pr-7">{note.text}</p>
+                  <button onClick={() => deleteNote(note.id)} className="absolute top-3 right-3 opacity-0 group-hover:opacity-25 hover:!opacity-70 transition-opacity" style={{ color: "var(--ink)" }}>
+                    <X size={13} />
+                  </button>
+                  <div className="mt-2">
+                    {note.tag ? (
+                      <span className="inline-block text-xs px-2 py-0.5 rounded-full"
+                        style={{ background: (TAG_COLORS[note.tag] ?? "var(--gold)") + "20", color: TAG_COLORS[note.tag] ?? "var(--gold)" }}>
+                        {note.tag}
+                      </span>
+                    ) : openTagNote === note.id ? (
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        {NOTE_TAGS.map(t => (
+                          <button key={t} onClick={() => addNoteTag(note.id, t)} className="text-xs px-2 py-0.5 rounded-full transition-all"
+                            style={{ background: TAG_COLORS[t] + "20", color: TAG_COLORS[t], border: `1px solid ${TAG_COLORS[t]}40` }}>
+                            {t}
+                          </button>
+                        ))}
+                        <button onClick={() => setOpenTagNote(null)} className="text-xs ml-1" style={{ color: "var(--ink-soft)", opacity: 0.5 }}>Cancel</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => setOpenTagNote(note.id)} className="text-xs hover:opacity-80"
+                        style={{ color: "var(--gold)", opacity: 0.55 }}>
+                        + Add tag
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
