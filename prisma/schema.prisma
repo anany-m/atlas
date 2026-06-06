@@ -1,0 +1,204 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum EventCategory {
+  Work
+  Personal
+  Health
+  Social
+  Focus
+}
+
+enum SavingsType {
+  saved
+  expense
+}
+
+enum DayOfWeek {
+  Mon
+  Tue
+  Wed
+  Thu
+  Fri
+  Sat
+  Sun
+}
+
+// ─── Global ───────────────────────────────────────────────────────────────────
+
+model Deliverable {
+  id        Int      @id @default(autoincrement())
+  name      String
+  progress  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Upskilling {
+  id        Int      @id @default(autoincrement())
+  name      String
+  provider  String
+  progress  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Event {
+  id        Int           @id @default(autoincrement())
+  date      DateTime      @db.Date
+  startTime DateTime      @db.Time
+  endTime   DateTime      @db.Time
+  title     String
+  category  EventCategory
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model Job {
+  id         Int      @id @default(autoincrement())
+  company    String
+  role       String
+  stage      String
+  nextAction String?
+  link       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Habit {
+  id        Int        @id @default(autoincrement())
+  name      String
+  createdAt DateTime   @default(now())
+  habitDays HabitDay[]
+}
+
+model Note {
+  id        Int      @id @default(autoincrement())
+  text      String
+  tag       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Week-based ───────────────────────────────────────────────────────────────
+
+model Week {
+  id          Int        @id @default(autoincrement())
+  monday      DateTime   @unique @db.Date
+  weeklyFocus String?
+  goals       WeekGoal[]
+  tasks       Task[]
+  chores      Chore[]
+  habitDays   HabitDay[]
+}
+
+model WeekGoal {
+  id     Int     @id @default(autoincrement())
+  text   String
+  done   Boolean @default(false)
+  weekId Int
+  week   Week    @relation(fields: [weekId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id     Int     @id @default(autoincrement())
+  title  String
+  done   Boolean @default(false)
+  weekId Int
+  week   Week    @relation(fields: [weekId], references: [id], onDelete: Cascade)
+}
+
+model Chore {
+  id     Int     @id @default(autoincrement())
+  title  String
+  done   Boolean @default(false)
+  weekId Int
+  week   Week    @relation(fields: [weekId], references: [id], onDelete: Cascade)
+}
+
+model HabitDay {
+  id      Int       @id @default(autoincrement())
+  day     DayOfWeek
+  done    Boolean   @default(false)
+  habitId Int
+  weekId  Int
+  habit   Habit     @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  week    Week      @relation(fields: [weekId], references: [id], onDelete: Cascade)
+
+  @@unique([habitId, weekId, day])
+}
+
+// ─── Quarter-based ────────────────────────────────────────────────────────────
+
+model SavingsEntry {
+  id        Int         @id @default(autoincrement())
+  label     String
+  amount    Decimal     @db.Decimal(12, 2)
+  type      SavingsType
+  quarter   Int
+  year      Int
+  createdAt DateTime    @default(now())
+}
+
+model Investment {
+  id         Int               @id @default(autoincrement())
+  goalAmount Decimal           @db.Decimal(12, 2)
+  quarter    Int
+  year       Int
+  entries    InvestmentEntry[]
+
+  @@unique([quarter, year])
+}
+
+model InvestmentEntry {
+  id           Int        @id @default(autoincrement())
+  name         String
+  amount       Decimal    @db.Decimal(12, 2)
+  investmentId Int
+  investment   Investment @relation(fields: [investmentId], references: [id], onDelete: Cascade)
+}
+
+model QuarterGoal {
+  id       Int    @id @default(autoincrement())
+  name     String
+  progress Int    @default(0)
+  quarter  Int
+  year     Int
+}
+
+model HealthMetric {
+  id           Int     @id @default(autoincrement())
+  name         String
+  currentValue Decimal @db.Decimal(10, 2)
+  goalValue    Decimal @db.Decimal(10, 2)
+  quarter      Int
+  year         Int
+}
+
+model ParkingLot {
+  id       Int     @id @default(autoincrement())
+  text     String
+  category String
+  link     String?
+  quarter  Int
+  year     Int
+}
+
+// ─── Bucket List ──────────────────────────────────────────────────────────────
+
+model BucketItem {
+  id       Int     @id @default(autoincrement())
+  title    String
+  category String
+  progress Int     @default(0)
+  achieved Boolean @default(false)
+  photoUrl String?
+}
