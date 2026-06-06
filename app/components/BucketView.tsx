@@ -20,9 +20,9 @@ type Category = typeof CATEGORIES[number]
 
 const CAT: Record<Category, { accent: string; gradient: string }> = {
   Travel:      { accent: "#3B82F6", gradient: "linear-gradient(135deg,#1a3060,#1d4ed8)" },
-  Career:      { accent: "#D4A853", gradient: "linear-gradient(135deg,#581621,#8A2436)" },
-  Experiences: { accent: "#F97316", gradient: "linear-gradient(135deg,#431407,#92400e)" },
-  Personal:    { accent: "#A78BFA", gradient: "linear-gradient(135deg,#2d1a5e,#5b21b6)" },
+  Career:      { accent: "#B0823C", gradient: "linear-gradient(135deg,#581621,#7A2230)" },
+  Experiences: { accent: "#EA6C1A", gradient: "linear-gradient(135deg,#431407,#92400e)" },
+  Personal:    { accent: "#7C5FC7", gradient: "linear-gradient(135deg,#2d1a5e,#5b21b6)" },
 }
 
 function catStyle(category: string) {
@@ -49,42 +49,15 @@ async function compressImage(file: File): Promise<string> {
   })
 }
 
-// ─── Confetti ─────────────────────────────────────────────────────────────────
-
-function Confetti() {
-  const COLORS = ["#D4A853","#8A2436","#3B82F6","#F97316","#A78BFA","#10B981"]
-  return (
-    <div className="fixed inset-0 pointer-events-none z-[100]" aria-hidden>
-      {Array.from({ length: 36 }, (_, i) => (
-        <div
-          key={i}
-          className="absolute bottom-0 confetti-particle"
-          style={{
-            left:              `${5 + (i / 36) * 90 + (i % 5)}%`,
-            width:             6 + (i % 3) * 2,
-            height:            8 + (i % 4) * 3,
-            background:        COLORS[i % COLORS.length],
-            borderRadius:      i % 3 === 0 ? "50%" : 2,
-            animationDelay:    `${(i % 8) * 0.07}s`,
-            animationDuration: `${1.4 + (i % 5) * 0.15}s`,
-          }}
-        />
-      ))}
-    </div>
-  )
-}
-
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function BucketView() {
-  const [items,          setItems]          = useState<BucketItem[]>([])
-  const [filter,         setFilter]         = useState("All")
-  const [celebrationKey, setCelebrationKey] = useState(0)
+  const [items,  setItems]  = useState<BucketItem[]>([])
+  const [filter, setFilter] = useState("All")
 
-  // Add form
-  const [adding,       setAdding]       = useState(false)
-  const [newTitle,     setNewTitle]     = useState("")
-  const [newCategory,  setNewCategory]  = useState<Category>("Travel")
+  const [adding,      setAdding]      = useState(false)
+  const [newTitle,    setNewTitle]    = useState("")
+  const [newCategory, setNewCategory] = useState<Category>("Travel")
 
   const progressTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({})
   const fileRefs       = useRef<Record<number, HTMLInputElement | null>>({})
@@ -118,7 +91,7 @@ export default function BucketView() {
 
   const markAchieved = async (id: number) => {
     setItems(prev => prev.map(i => i.id === id ? { ...i, achieved: true, progress: 100 } : i))
-    setCelebrationKey(k => k + 1)
+    window.dispatchEvent(new CustomEvent("f1-celebrate"))
     await fetch(`/api/bucket/${id}`, {
       method: "PATCH", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ achieved: true, progress: 100 }),
@@ -147,22 +120,18 @@ export default function BucketView() {
     await fetch(`/api/bucket/${id}`, { method: "DELETE" })
   }
 
-  // ─── Derived ───────────────────────────────────────────────────────────────
-
   const filtered = filter === "All" ? items : items.filter(i => i.category === filter)
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen text-[#F5F0E8]" style={{ background: "#0C0A0B" }}>
-      {celebrationKey > 0 && <Confetti key={celebrationKey} />}
-
+    <div className="min-h-screen" style={{ color: "var(--ink)" }}>
       <div className="max-w-5xl mx-auto px-4 py-8">
 
         {/* Header */}
         <div className="mb-7">
-          <h1 className="text-3xl font-bold tracking-tight">The Bucket List.</h1>
-          <p className="text-[11px] mt-1.5 uppercase tracking-widest" style={{ color: "rgba(245,240,232,0.3)" }}>
+          <h1 className="text-3xl font-bold tracking-tight" style={{ fontFamily: "var(--font-fraunces, serif)" }}>The Bucket List.</h1>
+          <p className="text-[11px] mt-1.5 uppercase tracking-widest" style={{ color: "var(--ink-soft)" }}>
             Magnum Opus.
           </p>
         </div>
@@ -178,9 +147,9 @@ export default function BucketView() {
                 onClick={() => setFilter(cat)}
                 className="px-4 py-1.5 rounded-full text-sm font-medium transition-all"
                 style={{
-                  background: active ? (accent ? `${accent}22` : "rgba(212,168,83,0.12)") : "rgba(255,255,255,0.04)",
-                  color:      active ? (accent ?? "#D4A853")                               : "rgba(245,240,232,0.4)",
-                  border:     `1px solid ${active ? (accent ? `${accent}55` : "rgba(212,168,83,0.4)") : "rgba(255,255,255,0.08)"}`,
+                  background: active ? (accent ? `${accent}18` : "rgba(122,34,48,0.1)") : "var(--paper)",
+                  color:      active ? (accent ?? "var(--burgundy)")                     : "var(--ink-soft)",
+                  border:     `1px solid ${active ? (accent ? `${accent}50` : "rgba(122,34,48,0.35)") : "var(--line)"}`,
                 }}
               >
                 {cat}
@@ -190,8 +159,8 @@ export default function BucketView() {
 
           <button
             onClick={() => { setAdding(true); setNewTitle("") }}
-            className="ml-auto flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all"
-            style={{ background: "rgba(212,168,83,0.12)", color: "#D4A853", border: "1px solid rgba(212,168,83,0.3)" }}
+            className="ml-auto flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all text-white"
+            style={{ background: "var(--burgundy)" }}
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -202,8 +171,8 @@ export default function BucketView() {
 
         {/* Add form */}
         {adding && (
-          <div className="rounded-2xl p-5 mb-6 border" style={{ background: "rgba(212,168,83,0.04)", borderColor: "rgba(212,168,83,0.2)" }}>
-            <p className="text-[11px] uppercase tracking-widest opacity-50 font-semibold mb-4">New bucket list item</p>
+          <div className="rounded-2xl p-5 mb-6 border" style={{ background: "var(--card)", borderColor: "var(--line)" }}>
+            <p className="text-[11px] uppercase tracking-widest font-semibold mb-4" style={{ color: "var(--ink-soft)" }}>New bucket list item</p>
             <div className="flex gap-3 flex-wrap">
               <input
                 autoFocus
@@ -211,27 +180,28 @@ export default function BucketView() {
                 onChange={e => setNewTitle(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && addItem()}
                 placeholder="What's on your list?"
-                className="flex-1 min-w-48 bg-white/[0.06] rounded-xl px-4 py-2.5 text-sm outline-none placeholder-white/20 text-[#F5F0E8]"
+                className="flex-1 min-w-48 rounded-xl px-4 py-2.5 text-sm outline-none"
+                style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }}
               />
-              <div className="flex rounded-xl overflow-hidden border border-white/10">
+              <div className="flex rounded-xl overflow-hidden" style={{ border: "1px solid var(--line)" }}>
                 {CATEGORIES.map(c => (
                   <button
                     key={c}
                     onClick={() => setNewCategory(c)}
                     className="px-3 py-2.5 text-xs font-medium transition-all"
                     style={{
-                      background: newCategory === c ? `${CAT[c].accent}22` : "transparent",
-                      color:      newCategory === c ? CAT[c].accent         : "rgba(245,240,232,0.4)",
+                      background: newCategory === c ? `${CAT[c].accent}18` : "transparent",
+                      color:      newCategory === c ? CAT[c].accent         : "var(--ink-soft)",
                     }}
                   >
                     {c}
                   </button>
                 ))}
               </div>
-              <button onClick={addItem} className="px-5 py-2.5 rounded-xl text-sm font-medium" style={{ background: "rgba(212,168,83,0.15)", color: "#D4A853", border: "1px solid rgba(212,168,83,0.3)" }}>
+              <button onClick={addItem} className="px-5 py-2.5 rounded-xl text-sm font-medium text-white" style={{ background: "var(--burgundy)" }}>
                 Add
               </button>
-              <button onClick={() => setAdding(false)} className="px-3 py-2.5 rounded-xl text-sm transition-all" style={{ background: "rgba(255,255,255,0.05)", color: "rgba(245,240,232,0.4)" }}>
+              <button onClick={() => setAdding(false)} className="px-3 py-2.5 rounded-xl text-sm transition-all" style={{ background: "var(--paper)", color: "var(--ink-soft)", border: "1px solid var(--line)" }}>
                 Cancel
               </button>
             </div>
@@ -246,7 +216,7 @@ export default function BucketView() {
               <div
                 key={item.id}
                 className="rounded-2xl overflow-hidden group flex flex-col"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+                style={{ background: "var(--card)", border: "1px solid var(--line)" }}
               >
                 {/* Hidden file input */}
                 <input
@@ -296,17 +266,17 @@ export default function BucketView() {
                   <div
                     className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider"
                     style={{
-                      background:    `${col.accent}28`,
-                      color:         col.accent,
-                      border:        `1px solid ${col.accent}50`,
+                      background:     `${col.accent}28`,
+                      color:          col.accent,
+                      border:         `1px solid ${col.accent}50`,
                       backdropFilter: "blur(6px)",
                     }}
                   >
                     {item.category}
                   </div>
 
-                  {/* Title */}
-                  <p className="absolute bottom-3 left-3 right-3 text-sm font-semibold text-white leading-snug">
+                  {/* Title overlay */}
+                  <p className="absolute bottom-3 left-3 right-3 text-sm font-semibold text-white leading-snug" style={{ fontFamily: "var(--font-fraunces, serif)" }}>
                     {item.title}
                   </p>
                 </div>
@@ -317,18 +287,18 @@ export default function BucketView() {
                   {/* Progress */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-[11px] font-medium" style={{ color: "rgba(245,240,232,0.4)" }}>Progress</p>
+                      <p className="text-[11px] font-medium" style={{ color: "var(--ink-soft)" }}>Progress</p>
                       <p className="text-[11px] font-semibold" style={{ color: col.accent }}>{item.progress}%</p>
                     </div>
 
                     {/* Glow bar */}
-                    <div className="h-1.5 rounded-full overflow-visible mb-2" style={{ background: "rgba(255,255,255,0.07)" }}>
+                    <div className="h-1.5 rounded-full overflow-visible mb-2" style={{ background: "var(--line)" }}>
                       <div
                         className="h-full rounded-full transition-all duration-300"
                         style={{
                           width:     `${item.progress}%`,
                           background: col.accent,
-                          boxShadow:  item.progress > 0 ? `0 0 8px ${col.accent}, 0 0 18px ${col.accent}70` : "none",
+                          boxShadow:  item.progress > 0 ? `0 0 7px ${col.accent}90, 0 0 16px ${col.accent}50` : "none",
                         }}
                       />
                     </div>
@@ -349,22 +319,22 @@ export default function BucketView() {
                         onClick={() => markAchieved(item.id)}
                         className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all"
                         style={{
-                          background: `${col.accent}18`,
+                          background: `${col.accent}14`,
                           color:       col.accent,
-                          border:      `1px solid ${col.accent}45`,
+                          border:      `1px solid ${col.accent}55`,
                         }}
                       >
                         🏁 Mark achieved
                       </button>
                     ) : (
-                      <div className="flex-1 py-2 text-center text-xs opacity-30">🏁 Done</div>
+                      <div className="flex-1 py-2 text-center text-xs" style={{ color: "var(--ink-soft)", opacity: 0.5 }}>🏁 Done</div>
                     )}
 
                     {item.photoUrl ? (
                       <button
                         onClick={() => removePhoto(item.id)}
                         className="py-2 px-3 rounded-xl text-xs transition-all"
-                        style={{ background: "rgba(255,255,255,0.06)", color: "rgba(245,240,232,0.4)", border: "1px solid rgba(255,255,255,0.09)" }}
+                        style={{ background: "var(--paper)", color: "var(--ink-soft)", border: "1px solid var(--line)" }}
                         title="Remove photo"
                       >
                         ✕ photo
@@ -373,7 +343,7 @@ export default function BucketView() {
                       <button
                         onClick={() => fileRefs.current[item.id]?.click()}
                         className="py-2 px-3 rounded-xl text-xs transition-all"
-                        style={{ background: "rgba(255,255,255,0.06)", color: "rgba(245,240,232,0.45)", border: "1px solid rgba(255,255,255,0.09)" }}
+                        style={{ background: "var(--paper)", color: "var(--ink-soft)", border: "1px solid var(--line)" }}
                         title="Add photo"
                       >
                         📷 photo
@@ -383,7 +353,7 @@ export default function BucketView() {
                     <button
                       onClick={() => deleteItem(item.id)}
                       className="p-2 rounded-xl transition-opacity opacity-0 group-hover:opacity-25 hover:!opacity-60"
-                      style={{ background: "rgba(255,255,255,0.05)" }}
+                      style={{ background: "var(--paper)" }}
                       title="Delete"
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -399,7 +369,7 @@ export default function BucketView() {
 
         {/* Empty state */}
         {filtered.length === 0 && !adding && (
-          <div className="flex flex-col items-center justify-center py-28 gap-3" style={{ color: "rgba(245,240,232,0.18)" }}>
+          <div className="flex flex-col items-center justify-center py-28 gap-3" style={{ color: "var(--ink-soft)", opacity: 0.45 }}>
             <span className="text-5xl">🪣</span>
             <p className="text-sm">
               {filter === "All" ? "Nothing on the list yet." : `No ${filter} items yet.`}

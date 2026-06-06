@@ -4,18 +4,17 @@ import { useState, useEffect, useRef } from "react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface SavingsEntry   { id: number; label: string; amount: number; type: "saved" | "expense" }
-interface InvEntry       { id: number; name: string; amount: number; investmentId: number }
-interface Investment     { id: number; goalAmount: number; entries: InvEntry[] }
-interface QuarterGoal    { id: number; name: string; progress: number }
-interface HealthMetric   { id: number; name: string; currentValue: number; goalValue: number }
-interface ParkingItem    { id: number; text: string; category: string; link: string | null }
+interface SavingsEntry { id: number; label: string; amount: number; type: "saved" | "expense" }
+interface InvEntry     { id: number; name: string; amount: number; investmentId: number }
+interface Investment   { id: number; goalAmount: number; entries: InvEntry[] }
+interface QuarterGoal  { id: number; name: string; progress: number }
+interface HealthMetric { id: number; name: string; currentValue: number; goalValue: number }
+interface ParkingItem  { id: number; text: string; category: string; link: string | null }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const INV_COLORS = ["#F59E0B","#EC4899","#06B6D4","#8B5CF6","#10B981","#F97316","#FB7185","#A78BFA","#34D399","#60A5FA"]
-
-const PARKING_COLS = ["Add to Cart","Health & Wellbeing","Leisure","Interested","Money Matters","Random"]
+const INV_COLORS    = ["#F59E0B","#EC4899","#06B6D4","#8B5CF6","#10B981","#F97316","#FB7185","#A78BFA","#34D399","#60A5FA"]
+const PARKING_COLS  = ["Add to Cart","Health & Wellbeing","Leisure","Interested","Money Matters","Random"]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -28,25 +27,25 @@ function prevQY(q: number, y: number) { return q === 1 ? { q: 4, y: y - 1 } : { 
 function nextQY(q: number, y: number) { return q === 4 ? { q: 1, y: y + 1 } : { q: q + 1, y } }
 
 function fmt$(n: number): string {
-  const abs = Math.abs(n)
+  const abs  = Math.abs(n)
   const sign = n < 0 ? "-" : ""
   if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`
   if (abs >= 1_000)     return `${sign}$${(abs / 1_000).toFixed(1)}k`
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n)
 }
 
-// ─── Shared card style ────────────────────────────────────────────────────────
+// ─── Shared styles ────────────────────────────────────────────────────────────
 
-const CARD = "rounded-2xl p-5 border"
-const CS   = { background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }
+const CARD      = "rounded-2xl p-5 border"
+const CARD_STYLE = { background: "var(--card)", borderColor: "var(--line)" }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <p className="text-[11px] font-semibold uppercase tracking-widest opacity-50 mb-4">{children}</p>
+  return <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--ink-soft)" }}>{children}</p>
 }
 
 function XBtn({ onClick }: { onClick: () => void }) {
   return (
-    <button onClick={onClick} className="opacity-0 group-hover:opacity-30 hover:!opacity-70 transition-opacity flex-shrink-0">
+    <button onClick={onClick} className="opacity-0 group-hover:opacity-30 hover:!opacity-70 transition-opacity flex-shrink-0" style={{ color: "var(--ink)" }}>
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
       </svg>
@@ -67,35 +66,28 @@ export default function QuarterView() {
   const [health,     setHealth]     = useState<HealthMetric[]>([])
   const [parking,    setParking]    = useState<ParkingItem[]>([])
 
-  // Savings form
   const [sLabel,  setSLabel]  = useState("")
   const [sAmount, setSAmount] = useState("")
   const [sType,   setSType]   = useState<"saved"|"expense">("saved")
 
-  // Investment form
   const [iName,   setIName]   = useState("")
   const [iAmount, setIAmount] = useState("")
 
-  // Goals form
   const [gName, setGName] = useState("")
 
-  // Health form
   const [hName,    setHName]    = useState("")
   const [hCurrent, setHCurrent] = useState("")
   const [hGoal,    setHGoal]    = useState("")
 
-  // Parking form
-  const [addingCol, setAddingCol]  = useState<string | null>(null)
-  const [pText,     setPText]      = useState("")
-  const [pLink,     setPLink]      = useState("")
+  const [addingCol, setAddingCol] = useState<string | null>(null)
+  const [pText,     setPText]     = useState("")
+  const [pLink,     setPLink]     = useState("")
 
   const goalTimers   = useRef<Record<number, ReturnType<typeof setTimeout>>>({})
   const healthTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({})
   const invGoalTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const qs = `q=${q}&y=${y}`
-
-  // ─── Load all data ─────────────────────────────────────────────────────────
 
   useEffect(() => {
     fetch(`/api/quarter/savings?${qs}`).then(r => r.json()).then(setSavings)
@@ -104,8 +96,6 @@ export default function QuarterView() {
     fetch(`/api/quarter/health?${qs}`).then(r => r.json()).then(setHealth)
     fetch(`/api/quarter/parking-lot?${qs}`).then(r => r.json()).then(setParking)
   }, [q, y]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ─── Navigation ────────────────────────────────────────────────────────────
 
   const goBack    = () => { const p = prevQY(q, y); setQ(p.q); setY(p.y) }
   const goForward = () => { const n = nextQY(q, y); setQ(n.q); setY(n.y) }
@@ -229,23 +219,21 @@ export default function QuarterView() {
 
   // ─── Derived ───────────────────────────────────────────────────────────────
 
-  const grossSaved = savings.filter(s => s.type === "saved").reduce((a, s) => a + s.amount, 0)
-  const totalSpent = savings.filter(s => s.type === "expense").reduce((a, s) => a + s.amount, 0)
-  const netSavings = grossSaved - totalSpent
-  const netPct     = grossSaved > 0 ? Math.max(0, Math.min(100, (netSavings / grossSaved) * 100)) : 0
-
+  const grossSaved    = savings.filter(s => s.type === "saved").reduce((a, s) => a + s.amount, 0)
+  const totalSpent    = savings.filter(s => s.type === "expense").reduce((a, s) => a + s.amount, 0)
+  const netSavings    = grossSaved - totalSpent
+  const netPct        = grossSaved > 0 ? Math.max(0, Math.min(100, (netSavings / grossSaved) * 100)) : 0
   const totalInvested = (investment?.entries ?? []).reduce((a, e) => a + e.amount, 0)
   const goalAmount    = investment?.goalAmount ?? 0
   const invPct        = goalAmount > 0 ? Math.min(100, (totalInvested / goalAmount) * 100) : 0
 
-  // Stacked investment segments
   const invSegments = (() => {
     if (!investment || goalAmount <= 0) return []
     let offset = 0
     return investment.entries.map((e, i) => {
-      const w = Math.min((e.amount / goalAmount) * 100, 100 - offset)
+      const w   = Math.min((e.amount / goalAmount) * 100, 100 - offset)
       const seg = { id: e.id, left: offset, width: Math.max(0, w), color: INV_COLORS[i % INV_COLORS.length] }
-      offset = Math.min(100, offset + (e.amount / goalAmount) * 100)
+      offset    = Math.min(100, offset + (e.amount / goalAmount) * 100)
       return seg
     })
   })()
@@ -253,24 +241,30 @@ export default function QuarterView() {
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen text-[#F5F0E8]" style={{ background: "#0C0A0B" }}>
+    <div className="min-h-screen" style={{ color: "var(--ink)" }}>
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-5">
 
         {/* ── Header ── */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
-            <button onClick={goBack} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
+            <button onClick={goBack} className="p-2 rounded-lg transition-colors" style={{ color: "var(--ink-soft)" }}
+              onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.05)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+            >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15,18 9,12 15,6"/></svg>
             </button>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">{y} · Q{q}</h1>
-              <p className="text-xs opacity-35 mt-0.5">The long game.</p>
+              <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: "var(--font-fraunces, serif)" }}>{y} · Q{q}</h1>
+              <p className="text-xs mt-0.5" style={{ color: "var(--ink-soft)" }}>The long game.</p>
             </div>
-            <button onClick={goForward} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
+            <button onClick={goForward} className="p-2 rounded-lg transition-colors" style={{ color: "var(--ink-soft)" }}
+              onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.05)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+            >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9,18 15,12 9,6"/></svg>
             </button>
             {!isCurrent && (
-              <button onClick={goCurrent} className="text-xs px-3 py-1 rounded-full border transition-colors" style={{ borderColor: "rgba(212,168,83,0.4)", color: "#D4A853" }}>
+              <button onClick={goCurrent} className="text-xs px-3 py-1 rounded-full border transition-colors" style={{ borderColor: "rgba(122,34,48,0.35)", color: "var(--burgundy)" }}>
                 Current
               </button>
             )}
@@ -278,144 +272,132 @@ export default function QuarterView() {
         </div>
 
         {/* ── Savings ── */}
-        <div className={CARD} style={CS}>
+        <div className={CARD} style={CARD_STYLE}>
           <SectionTitle>Savings</SectionTitle>
 
-          {/* Big number */}
           <div className="mb-4">
-            <p className="text-4xl font-bold tracking-tight" style={{ color: netSavings >= 0 ? "#F5F0E8" : "#F87171" }}>
+            <p className="text-4xl font-bold tracking-tight" style={{ fontFamily: "var(--font-fraunces, serif)", color: netSavings >= 0 ? "var(--ink)" : "#DC2626" }}>
               {fmt$(netSavings)}
             </p>
-            <p className="text-xs mt-1 space-x-3" style={{ color: "rgba(245,240,232,0.4)" }}>
+            <p className="text-xs mt-1 space-x-3" style={{ color: "var(--ink-soft)" }}>
               <span>saved {fmt$(grossSaved)}</span>
               <span>·</span>
               <span>spent {fmt$(totalSpent)}</span>
             </p>
           </div>
 
-          {/* Visualization */}
           {grossSaved > 0 && (
-            <div className="relative h-4 rounded-full overflow-hidden mb-5" style={{ background: "rgba(255,255,255,0.04)" }}>
-              {/* Ghost bar - hatched - full width */}
+            <div className="relative h-4 rounded-full overflow-hidden mb-5" style={{ background: "var(--paper)" }}>
               <div className="absolute inset-0 rounded-full" style={{
-                backgroundImage: "repeating-linear-gradient(-45deg, rgba(255,255,255,0.07), rgba(255,255,255,0.07) 3px, transparent 3px, transparent 9px)",
+                backgroundImage: "repeating-linear-gradient(-45deg, rgba(0,0,0,0.06), rgba(0,0,0,0.06) 3px, transparent 3px, transparent 9px)",
               }} />
-              {/* Net bar */}
               <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-500" style={{
-                width: `${netPct}%`,
-                background: "linear-gradient(to right, rgba(212,168,83,0.9), rgba(212,168,83,0.6))",
+                width:      `${netPct}%`,
+                background: "linear-gradient(to right, var(--burgundy), var(--gold))",
               }} />
             </div>
           )}
 
-          {/* Entries */}
           <div className="space-y-1.5 mb-4">
             {savings.map(e => (
               <div key={e.id} className="flex items-center gap-3 group text-sm">
                 <span
                   className="text-[10px] px-1.5 py-0.5 rounded font-semibold flex-shrink-0"
                   style={{
-                    background: e.type === "saved" ? "rgba(16,185,129,0.15)" : "rgba(248,113,113,0.15)",
-                    color:      e.type === "saved" ? "#10B981" : "#F87171",
+                    background: e.type === "saved" ? "rgba(16,185,129,0.12)" : "rgba(220,38,38,0.1)",
+                    color:      e.type === "saved" ? "#059669"                : "#DC2626",
                   }}
                 >
                   {e.type === "saved" ? "+" : "−"}
                 </span>
-                <span className="flex-1 opacity-80">{e.label}</span>
+                <span className="flex-1" style={{ color: "var(--ink-soft)" }}>{e.label}</span>
                 <span className="font-medium tabular-nums">{fmt$(e.amount)}</span>
                 <XBtn onClick={() => deleteSavings(e.id)} />
               </div>
             ))}
           </div>
 
-          {/* Add form */}
-          <div className="flex items-center gap-2 flex-wrap pt-3 border-t border-white/[0.05]">
-            <input value={sLabel} onChange={e => setSLabel(e.target.value)} placeholder="Label…" className="flex-1 min-w-24 bg-white/[0.06] rounded-lg px-3 py-1.5 text-sm outline-none placeholder-white/20 text-[#F5F0E8]" />
-            <input value={sAmount} onChange={e => setSAmount(e.target.value)} onKeyDown={e => e.key === "Enter" && addSavings()} placeholder="$0" type="number" min="0" className="w-24 bg-white/[0.06] rounded-lg px-3 py-1.5 text-sm outline-none placeholder-white/20 text-[#F5F0E8]" />
-            {/* Saved / Expense toggle */}
-            <div className="flex rounded-lg overflow-hidden border border-white/10">
+          <div className="flex items-center gap-2 flex-wrap pt-3" style={{ borderTop: "1px solid var(--line)" }}>
+            <input value={sLabel} onChange={e => setSLabel(e.target.value)} placeholder="Label…" className="flex-1 min-w-24 rounded-lg px-3 py-1.5 text-sm outline-none" style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
+            <input value={sAmount} onChange={e => setSAmount(e.target.value)} onKeyDown={e => e.key === "Enter" && addSavings()} placeholder="$0" type="number" min="0" className="w-24 rounded-lg px-3 py-1.5 text-sm outline-none" style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
+            <div className="flex rounded-lg overflow-hidden" style={{ border: "1px solid var(--line)" }}>
               {(["saved","expense"] as const).map(t => (
                 <button key={t} onClick={() => setSType(t)} className="px-3 py-1.5 text-xs font-medium capitalize transition-all" style={{
-                  background: sType === t ? (t === "saved" ? "rgba(16,185,129,0.2)" : "rgba(248,113,113,0.2)") : "transparent",
-                  color:      sType === t ? (t === "saved" ? "#10B981" : "#F87171") : "rgba(245,240,232,0.4)",
+                  background: sType === t ? (t === "saved" ? "rgba(16,185,129,0.15)" : "rgba(220,38,38,0.1)") : "transparent",
+                  color:      sType === t ? (t === "saved" ? "#059669"                : "#DC2626")             : "var(--ink-soft)",
                 }}>{t}</button>
               ))}
             </div>
-            <button onClick={addSavings} className="px-4 py-1.5 rounded-lg text-xs font-medium transition-colors" style={{ background: "rgba(212,168,83,0.15)", color: "#D4A853", border: "1px solid rgba(212,168,83,0.3)" }}>
+            <button onClick={addSavings} className="px-4 py-1.5 rounded-lg text-xs font-medium text-white" style={{ background: "var(--burgundy)" }}>
               Add
             </button>
           </div>
         </div>
 
         {/* ── Investments ── */}
-        <div className={CARD} style={CS}>
+        <div className={CARD} style={CARD_STYLE}>
           <div className="flex items-start justify-between mb-4">
             <SectionTitle>Investments</SectionTitle>
             <div className="flex items-center gap-1.5 -mt-1">
-              <span className="text-xs opacity-40">Goal</span>
+              <span className="text-xs" style={{ color: "var(--ink-soft)" }}>Goal</span>
               <div className="flex items-center">
-                <span className="text-xs opacity-40 mr-0.5">$</span>
+                <span className="text-xs mr-0.5" style={{ color: "var(--ink-soft)" }}>$</span>
                 <input
                   type="number" min="0"
                   value={investment?.goalAmount || ""}
                   onChange={e => updateGoalAmount(parseFloat(e.target.value) || 0)}
                   placeholder="0"
-                  className="w-20 bg-white/[0.06] rounded-lg px-2 py-1 text-sm outline-none text-right text-[#F5F0E8] placeholder-white/20"
+                  className="w-20 rounded-lg px-2 py-1 text-sm outline-none text-right"
+                  style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }}
                 />
               </div>
             </div>
           </div>
 
-          {/* Stacked bar */}
-          <div className="relative h-5 rounded-full overflow-hidden mb-3" style={{ background: "rgba(255,255,255,0.06)" }}>
+          <div className="relative h-5 rounded-full overflow-hidden mb-3" style={{ background: "var(--paper)", border: "1px solid var(--line)" }}>
             {goalAmount > 0 && invSegments.map(seg => (
-              <div key={seg.id} className="absolute top-0 h-full transition-all duration-500" style={{
-                left: `${seg.left}%`, width: `${seg.width}%`, background: seg.color,
-              }} />
+              <div key={seg.id} className="absolute top-0 h-full transition-all duration-500" style={{ left: `${seg.left}%`, width: `${seg.width}%`, background: seg.color }} />
             ))}
             {goalAmount <= 0 && totalInvested > 0 && (
               <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: "100%", background: INV_COLORS[0] + "80" }} />
             )}
           </div>
 
-          {/* Stats */}
           <div className="flex items-center gap-3 mb-4 text-sm">
-            <span className="font-semibold">{fmt$(totalInvested)}</span>
+            <span className="font-semibold" style={{ fontFamily: "var(--font-fraunces, serif)" }}>{fmt$(totalInvested)}</span>
             {goalAmount > 0 && (
               <>
-                <span className="opacity-30">of {fmt$(goalAmount)}</span>
-                <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(212,168,83,0.12)", color: "#D4A853" }}>
+                <span style={{ color: "var(--ink-soft)" }}>of {fmt$(goalAmount)}</span>
+                <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(122,34,48,0.1)", color: "var(--burgundy)" }}>
                   {invPct.toFixed(0)}%
                 </span>
               </>
             )}
           </div>
 
-          {/* Entries */}
           <div className="space-y-2 mb-4">
             {(investment?.entries ?? []).map((e, i) => (
               <div key={e.id} className="flex items-center gap-3 group text-sm">
                 <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: INV_COLORS[i % INV_COLORS.length] }} />
-                <span className="flex-1 opacity-80">{e.name}</span>
+                <span className="flex-1" style={{ color: "var(--ink-soft)" }}>{e.name}</span>
                 <span className="font-medium tabular-nums">{fmt$(e.amount)}</span>
-                {goalAmount > 0 && <span className="text-xs opacity-30 w-10 text-right">{((e.amount / goalAmount) * 100).toFixed(0)}%</span>}
+                {goalAmount > 0 && <span className="text-xs w-10 text-right" style={{ color: "var(--ink-soft)", opacity: 0.6 }}>{((e.amount / goalAmount) * 100).toFixed(0)}%</span>}
                 <XBtn onClick={() => deleteInvEntry(e.id)} />
               </div>
             ))}
           </div>
 
-          {/* Add entry */}
-          <div className="flex gap-2 pt-3 border-t border-white/[0.05]">
-            <input value={iName} onChange={e => setIName(e.target.value)} placeholder="Stock / fund / portfolio…" className="flex-1 bg-white/[0.06] rounded-lg px-3 py-1.5 text-sm outline-none placeholder-white/20 text-[#F5F0E8]" />
-            <input value={iAmount} onChange={e => setIAmount(e.target.value)} onKeyDown={e => e.key === "Enter" && addInvEntry()} placeholder="$0" type="number" min="0" className="w-24 bg-white/[0.06] rounded-lg px-3 py-1.5 text-sm outline-none placeholder-white/20 text-[#F5F0E8]" />
-            <button onClick={addInvEntry} className="px-4 py-1.5 rounded-lg text-xs font-medium" style={{ background: "rgba(212,168,83,0.15)", color: "#D4A853", border: "1px solid rgba(212,168,83,0.3)" }}>
+          <div className="flex gap-2 pt-3" style={{ borderTop: "1px solid var(--line)" }}>
+            <input value={iName} onChange={e => setIName(e.target.value)} placeholder="Stock / fund / portfolio…" className="flex-1 rounded-lg px-3 py-1.5 text-sm outline-none" style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
+            <input value={iAmount} onChange={e => setIAmount(e.target.value)} onKeyDown={e => e.key === "Enter" && addInvEntry()} placeholder="$0" type="number" min="0" className="w-24 rounded-lg px-3 py-1.5 text-sm outline-none" style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
+            <button onClick={addInvEntry} className="px-4 py-1.5 rounded-lg text-xs font-medium text-white" style={{ background: "var(--burgundy)" }}>
               Add
             </button>
           </div>
         </div>
 
         {/* ── Bigger Goals ── */}
-        <div className={CARD} style={CS}>
+        <div className={CARD} style={CARD_STYLE}>
           <SectionTitle>Bigger Goals</SectionTitle>
 
           <div className="space-y-5">
@@ -424,38 +406,36 @@ export default function QuarterView() {
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">{g.name}</span>
                   <div className="flex items-center gap-3">
-                    <span className="text-xs font-semibold" style={{ color: "#D4A853" }}>{g.progress}%</span>
+                    <span className="text-xs font-semibold" style={{ color: "var(--burgundy)" }}>{g.progress}%</span>
                     <XBtn onClick={() => deleteGoal(g.id)} />
                   </div>
                 </div>
-                {/* Gradient bar */}
-                <div className="h-2 rounded-full overflow-hidden mb-1.5" style={{ background: "rgba(255,255,255,0.07)" }}>
-                  <div className="h-full rounded-full transition-all duration-400" style={{
-                    width: `${g.progress}%`,
-                    background: "linear-gradient(to right, #8A2436, #D4A853)",
+                <div className="h-2 rounded-full overflow-hidden mb-1.5" style={{ background: "var(--paper)" }}>
+                  <div className="h-full rounded-full transition-all" style={{
+                    width:      `${g.progress}%`,
+                    background: "linear-gradient(to right, var(--burgundy), var(--gold))",
                   }} />
                 </div>
                 <input
                   type="range" min={0} max={100} value={g.progress}
                   onChange={e => updateGoalProgress(g.id, parseInt(e.target.value))}
                   className="w-full h-1 rounded-full appearance-none cursor-pointer"
-                  style={{ accentColor: "#D4A853" }}
+                  style={{ accentColor: "var(--burgundy)" }}
                 />
               </div>
             ))}
           </div>
 
-          {/* Add goal */}
-          <div className="flex gap-2 pt-4 mt-1 border-t border-white/[0.05]">
-            <input value={gName} onChange={e => setGName(e.target.value)} onKeyDown={e => e.key === "Enter" && addGoal()} placeholder="Add a bigger goal…" className="flex-1 bg-white/[0.06] rounded-lg px-3 py-1.5 text-sm outline-none placeholder-white/20 text-[#F5F0E8]" />
-            <button onClick={addGoal} className="px-4 py-1.5 rounded-lg text-xs font-medium" style={{ background: "rgba(212,168,83,0.15)", color: "#D4A853", border: "1px solid rgba(212,168,83,0.3)" }}>
+          <div className="flex gap-2 pt-4 mt-1" style={{ borderTop: "1px solid var(--line)" }}>
+            <input value={gName} onChange={e => setGName(e.target.value)} onKeyDown={e => e.key === "Enter" && addGoal()} placeholder="Add a bigger goal…" className="flex-1 rounded-lg px-3 py-1.5 text-sm outline-none" style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
+            <button onClick={addGoal} className="px-4 py-1.5 rounded-lg text-xs font-medium text-white" style={{ background: "var(--burgundy)" }}>
               Add
             </button>
           </div>
         </div>
 
         {/* ── Health ── */}
-        <div className={CARD} style={CS}>
+        <div className={CARD} style={CARD_STYLE}>
           <SectionTitle>Health</SectionTitle>
 
           <div className="space-y-4">
@@ -471,17 +451,17 @@ export default function QuarterView() {
                           type="number"
                           value={m.currentValue || ""}
                           onChange={e => updateHealthCurrent(m.id, parseFloat(e.target.value) || 0)}
-                          className="w-16 text-right bg-white/[0.06] rounded px-2 py-0.5 text-sm outline-none text-[#F5F0E8]"
+                          className="w-16 text-right rounded px-2 py-0.5 text-sm outline-none"
+                          style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }}
                         />
-                        <span className="text-xs opacity-30">/ {m.goalValue}</span>
+                        <span className="text-xs" style={{ color: "var(--ink-soft)" }}>/ {m.goalValue}</span>
                       </div>
                       <XBtn onClick={() => deleteHealth(m.id)} />
                     </div>
                   </div>
-                  {/* Pulsing green bar */}
-                  <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                    <div className="h-full rounded-full health-pulse transition-all duration-400" style={{
-                      width: `${pct}%`,
+                  <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--paper)" }}>
+                    <div className="h-full rounded-full health-pulse transition-all" style={{
+                      width:      `${pct}%`,
                       background: "linear-gradient(to right, #059669, #10B981)",
                     }} />
                   </div>
@@ -490,19 +470,18 @@ export default function QuarterView() {
             })}
           </div>
 
-          {/* Add metric */}
-          <div className="flex gap-2 flex-wrap pt-4 mt-1 border-t border-white/[0.05]">
-            <input value={hName} onChange={e => setHName(e.target.value)} placeholder="Metric name…" className="flex-1 min-w-28 bg-white/[0.06] rounded-lg px-3 py-1.5 text-sm outline-none placeholder-white/20 text-[#F5F0E8]" />
-            <input value={hCurrent} onChange={e => setHCurrent(e.target.value)} placeholder="Current" type="number" className="w-20 bg-white/[0.06] rounded-lg px-3 py-1.5 text-sm outline-none placeholder-white/20 text-[#F5F0E8]" />
-            <input value={hGoal} onChange={e => setHGoal(e.target.value)} onKeyDown={e => e.key === "Enter" && addHealth()} placeholder="Goal" type="number" className="w-20 bg-white/[0.06] rounded-lg px-3 py-1.5 text-sm outline-none placeholder-white/20 text-[#F5F0E8]" />
-            <button onClick={addHealth} className="px-4 py-1.5 rounded-lg text-xs font-medium" style={{ background: "rgba(212,168,83,0.15)", color: "#D4A853", border: "1px solid rgba(212,168,83,0.3)" }}>
+          <div className="flex gap-2 flex-wrap pt-4 mt-1" style={{ borderTop: "1px solid var(--line)" }}>
+            <input value={hName} onChange={e => setHName(e.target.value)} placeholder="Metric name…" className="flex-1 min-w-28 rounded-lg px-3 py-1.5 text-sm outline-none" style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
+            <input value={hCurrent} onChange={e => setHCurrent(e.target.value)} placeholder="Current" type="number" className="w-20 rounded-lg px-3 py-1.5 text-sm outline-none" style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
+            <input value={hGoal} onChange={e => setHGoal(e.target.value)} onKeyDown={e => e.key === "Enter" && addHealth()} placeholder="Goal" type="number" className="w-20 rounded-lg px-3 py-1.5 text-sm outline-none" style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }} />
+            <button onClick={addHealth} className="px-4 py-1.5 rounded-lg text-xs font-medium text-white" style={{ background: "var(--burgundy)" }}>
               Add
             </button>
           </div>
         </div>
 
         {/* ── Parking Lot ── */}
-        <div className={CARD} style={CS}>
+        <div className={CARD} style={CARD_STYLE}>
           <SectionTitle>Parking Lot</SectionTitle>
 
           <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1">
@@ -510,12 +489,12 @@ export default function QuarterView() {
               const items = parking.filter(p => p.category === col)
               return (
                 <div key={col} className="flex-shrink-0 w-44 space-y-2">
-                  {/* Column header */}
                   <div className="flex items-center justify-between mb-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider opacity-40 leading-tight">{col}</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider leading-tight" style={{ color: "var(--ink-soft)" }}>{col}</p>
                     <button
                       onClick={() => { setAddingCol(addingCol === col ? null : col); setPText(""); setPLink("") }}
-                      className="text-[#D4A853] opacity-50 hover:opacity-100 transition-opacity flex-shrink-0 ml-1"
+                      className="opacity-50 hover:opacity-100 transition-opacity flex-shrink-0 ml-1"
+                      style={{ color: "var(--burgundy)" }}
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -523,44 +502,44 @@ export default function QuarterView() {
                     </button>
                   </div>
 
-                  {/* Inline add form */}
                   {addingCol === col && (
-                    <div className="rounded-xl p-2.5 space-y-1.5" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                    <div className="rounded-xl p-2.5 space-y-1.5" style={{ background: "var(--paper)", border: "1px solid var(--line)" }}>
                       <input
                         autoFocus
                         value={pText}
                         onChange={e => setPText(e.target.value)}
                         placeholder="Idea…"
-                        className="w-full bg-transparent text-xs text-[#F5F0E8] outline-none placeholder-white/25"
+                        className="w-full bg-transparent text-xs outline-none"
+                        style={{ color: "var(--ink)" }}
                       />
                       <input
                         value={pLink}
                         onChange={e => setPLink(e.target.value)}
                         placeholder="Link (optional)"
-                        className="w-full bg-transparent text-xs text-[#F5F0E8] outline-none placeholder-white/25 border-t border-white/10 pt-1.5"
+                        className="w-full bg-transparent text-xs outline-none pt-1.5"
+                        style={{ borderTop: "1px solid var(--line)", color: "var(--ink)" }}
                       />
                       <div className="flex gap-1 pt-0.5">
-                        <button onClick={() => addParking(col)} className="flex-1 text-xs py-1 rounded-md font-medium" style={{ background: "rgba(212,168,83,0.2)", color: "#D4A853" }}>
+                        <button onClick={() => addParking(col)} className="flex-1 text-xs py-1 rounded-md font-medium text-white" style={{ background: "var(--burgundy)" }}>
                           Add
                         </button>
-                        <button onClick={() => setAddingCol(null)} className="text-xs px-2 py-1 rounded-md opacity-40 hover:opacity-70" style={{ background: "rgba(255,255,255,0.08)" }}>
+                        <button onClick={() => setAddingCol(null)} className="text-xs px-2 py-1 rounded-md transition-opacity" style={{ background: "var(--line)", color: "var(--ink-soft)" }}>
                           ✕
                         </button>
                       </div>
                     </div>
                   )}
 
-                  {/* Cards */}
                   {items.map(item => (
                     <div
                       key={item.id}
                       className="rounded-xl p-3 group relative"
-                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+                      style={{ background: "var(--paper)", border: "1px solid var(--line)" }}
                     >
-                      <p className="text-xs leading-relaxed text-[#F5F0E8] pr-4 mb-2">{item.text}</p>
+                      <p className="text-xs leading-relaxed pr-4 mb-2" style={{ color: "var(--ink)" }}>{item.text}</p>
 
                       {item.link && (
-                        <a href={item.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] opacity-40 hover:opacity-80 transition-opacity mb-2">
+                        <a href={item.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] mb-2 transition-opacity hover:opacity-80" style={{ color: "var(--ink-soft)", opacity: 0.55 }}>
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
                           </svg>
@@ -568,17 +547,16 @@ export default function QuarterView() {
                         </a>
                       )}
 
-                      {/* Move to category */}
                       <select
                         value={item.category}
                         onChange={e => moveParkingItem(item.id, e.target.value)}
                         className="w-full text-[10px] rounded px-1.5 py-1 outline-none cursor-pointer"
-                        style={{ background: "rgba(255,255,255,0.07)", color: "rgba(245,240,232,0.5)", colorScheme: "dark" }}
+                        style={{ background: "var(--card)", color: "var(--ink-soft)", border: "1px solid var(--line)" }}
                       >
                         {PARKING_COLS.map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
 
-                      <button onClick={() => deleteParking(item.id)} className="absolute top-2 right-2 opacity-0 group-hover:opacity-30 hover:!opacity-70 transition-opacity">
+                      <button onClick={() => deleteParking(item.id)} className="absolute top-2 right-2 opacity-0 group-hover:opacity-30 hover:!opacity-70 transition-opacity" style={{ color: "var(--ink)" }}>
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                         </svg>

@@ -6,14 +6,14 @@ import { useState, useEffect, useRef, useCallback } from "react"
 
 type DayKey = "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun"
 
-interface Goal          { id: number; text: string; done: boolean }
-interface Task          { id: number; title: string; done: boolean }
-interface Chore         { id: number; title: string; done: boolean }
-interface Habit         { id: number; name: string }
-interface HabitDay      { id: number; habitId: number; weekId: number; day: DayKey; done: boolean }
-interface Deliverable   { id: number; name: string; progress: number }
-interface UpskillingItem{ id: number; name: string; provider: string; progress: number }
-interface Note          { id: number; text: string; tag: string | null; createdAt: string }
+interface Goal           { id: number; text: string; done: boolean }
+interface Task           { id: number; title: string; done: boolean }
+interface Chore          { id: number; title: string; done: boolean }
+interface Habit          { id: number; name: string }
+interface HabitDay       { id: number; habitId: number; weekId: number; day: DayKey; done: boolean }
+interface Deliverable    { id: number; name: string; progress: number }
+interface UpskillingItem { id: number; name: string; provider: string; progress: number }
+interface Note           { id: number; text: string; tag: string | null; createdAt: string }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -30,11 +30,11 @@ const NOTE_TAGS = [
 ]
 
 const TAG_COLORS: Record<string, string> = {
-  "Explore Further":        "#06B6D4",
-  "Brain Wave":             "#8B5CF6",
-  "Interested - On My Mind":"#F59E0B",
-  "Money Matters":          "#10B981",
-  "Random Musings":         "#EC4899",
+  "Explore Further":          "#06B6D4",
+  "Brain Wave":               "#8B5CF6",
+  "Interested - On My Mind":  "#F59E0B",
+  "Money Matters":            "#10B981",
+  "Random Musings":           "#EC4899",
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ function ProgressRing({ progress, color, size = 60 }: { progress: number; color:
   return (
     <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90 absolute inset-0">
-        <circle cx={c} cy={c} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={stroke} />
+        <circle cx={c} cy={c} r={r} fill="none" stroke="var(--line)" strokeWidth={stroke} />
         <circle
           cx={c} cy={c} r={r} fill="none" stroke={color} strokeWidth={stroke}
           strokeLinecap="round"
@@ -88,44 +88,22 @@ function ProgressRing({ progress, color, size = 60 }: { progress: number; color:
   )
 }
 
-function GoldCheckbox({ checked, onChange }: { checked: boolean; onChange: () => void }) {
+function Checkbox({ checked, onChange }: { checked: boolean; onChange: () => void }) {
   return (
     <button
       onClick={onChange}
       className="flex-shrink-0 w-[18px] h-[18px] rounded-[4px] border-2 flex items-center justify-center transition-all duration-150"
       style={{
-        borderColor: checked ? "#D4A853" : "rgba(255,255,255,0.22)",
-        background:  checked ? "#D4A853" : "transparent",
+        borderColor: checked ? "var(--burgundy)" : "var(--line)",
+        background:  checked ? "var(--burgundy)" : "transparent",
       }}
     >
       {checked && (
         <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
-          <path d="M1 3.5L3 5.5L8 1" stroke="#0C0A0B" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M1 3.5L3 5.5L8 1" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       )}
     </button>
-  )
-}
-
-function Confetti() {
-  const COLORS = ["#D4A853", "#8A2436", "#EC4899", "#06B6D4", "#8B5CF6", "#10B981"]
-  return (
-    <div className="fixed inset-0 pointer-events-none z-[100]" aria-hidden>
-      {Array.from({ length: 32 }, (_, i) => (
-        <div
-          key={i}
-          className="absolute bottom-0 confetti-particle"
-          style={{
-            left:            `${5 + (i / 32) * 90 + (i % 5)}%`,
-            width:           6 + (i % 3) * 2,
-            height:          6 + (i % 4),
-            backgroundColor: COLORS[i % COLORS.length],
-            borderRadius:    i % 4 === 0 ? "50%" : "2px",
-            animationDelay:  `${(i % 10) * 45}ms`,
-          }}
-        />
-      ))}
-    </div>
   )
 }
 
@@ -145,10 +123,12 @@ function XIcon({ size = 13 }: { size?: number }) {
   )
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// ─── Shared card style ─────────────────────────────────────────────────────────
 
 const CARD = "rounded-2xl p-5 border"
-const CARD_STYLE = { background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }
+const CARD_STYLE = { background: "var(--card)", borderColor: "var(--line)" }
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function WeekView() {
   const [currentMonday, setCurrentMonday] = useState<Date>(() => getMonday(new Date()))
@@ -166,28 +146,29 @@ export default function WeekView() {
   const [upskilling,   setUpskilling]   = useState<UpskillingItem[]>([])
   const [notes,        setNotes]        = useState<Note[]>([])
 
-  const [noteFilter,       setNoteFilter]       = useState("All")
-  const [openTagNote,      setOpenTagNote]       = useState<number | null>(null)
-  const [newGoalText,      setNewGoalText]       = useState("")
-  const [newTaskText,      setNewTaskText]       = useState("")
-  const [newChoreText,     setNewChoreText]      = useState("")
-  const [newHabitName,     setNewHabitName]      = useState("")
-  const [newDelivName,     setNewDelivName]      = useState("")
-  const [newUpskillName,   setNewUpskillName]    = useState("")
-  const [newUpskillProv,   setNewUpskillProv]    = useState("")
-  const [newNoteText,      setNewNoteText]       = useState("")
-  const [celebrationKey,   setCelebrationKey]    = useState(0)
-  const [loading,          setLoading]           = useState(true)
+  const [noteFilter,     setNoteFilter]     = useState("All")
+  const [openTagNote,    setOpenTagNote]    = useState<number | null>(null)
+  const [newGoalText,    setNewGoalText]    = useState("")
+  const [newTaskText,    setNewTaskText]    = useState("")
+  const [newChoreText,   setNewChoreText]   = useState("")
+  const [newHabitName,   setNewHabitName]   = useState("")
+  const [newDelivName,   setNewDelivName]   = useState("")
+  const [newUpskillName, setNewUpskillName] = useState("")
+  const [newUpskillProv, setNewUpskillProv] = useState("")
+  const [newNoteText,    setNewNoteText]    = useState("")
+  const [loading,        setLoading]        = useState(true)
 
-  const focusRef      = useRef<HTMLTextAreaElement>(null)
-  const focusTimer    = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const focusRef       = useRef<HTMLTextAreaElement>(null)
+  const focusTimer     = useRef<ReturnType<typeof setTimeout> | null>(null)
   const progressTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({})
 
-  // ─── Celebration ──────────────────────────────────────────────────────────
+  // ─── Celebration ───────────────────────────────────────────────────────────
 
-  const celebrate = useCallback(() => setCelebrationKey(k => k + 1), [])
+  const celebrate = useCallback(() => {
+    window.dispatchEvent(new CustomEvent("f1-celebrate"))
+  }, [])
 
-  // ─── Load week ────────────────────────────────────────────────────────────
+  // ─── Load week ─────────────────────────────────────────────────────────────
 
   useEffect(() => {
     setLoading(true)
@@ -197,8 +178,8 @@ export default function WeekView() {
       .then(week => {
         setWeekId(week.id)
         setWeeklyFocus(week.weeklyFocus ?? "")
-        setGoals(week.goals  ?? [])
-        setTasks(week.tasks  ?? [])
+        setGoals(week.goals   ?? [])
+        setTasks(week.tasks   ?? [])
         setChores(week.chores ?? [])
         return week.id as number
       })
@@ -210,7 +191,7 @@ export default function WeekView() {
       .finally(() => setLoading(false))
   }, [currentMonday])
 
-  // ─── Load globals (once) ─────────────────────────────────────────────────
+  // ─── Load globals (once) ───────────────────────────────────────────────────
 
   useEffect(() => {
     fetch("/api/habits").then(r => r.json()).then(setHabits)
@@ -219,7 +200,7 @@ export default function WeekView() {
     fetch("/api/notes").then(r => r.json()).then(setNotes)
   }, [])
 
-  // ─── Auto-grow textarea ───────────────────────────────────────────────────
+  // ─── Auto-grow textarea ────────────────────────────────────────────────────
 
   useEffect(() => {
     const el = focusRef.current
@@ -228,13 +209,13 @@ export default function WeekView() {
     el.style.height = el.scrollHeight + "px"
   }, [weeklyFocus])
 
-  // ─── Navigation ──────────────────────────────────────────────────────────
+  // ─── Navigation ────────────────────────────────────────────────────────────
 
   const prevWeek = () => setCurrentMonday(d => { const n = new Date(d); n.setDate(n.getDate() - 7); return n })
   const nextWeek = () => setCurrentMonday(d => { const n = new Date(d); n.setDate(n.getDate() + 7); return n })
   const goToday  = () => setCurrentMonday(getMonday(new Date()))
 
-  // ─── Weekly focus ─────────────────────────────────────────────────────────
+  // ─── Weekly focus ──────────────────────────────────────────────────────────
 
   const handleFocusChange = (val: string) => {
     setWeeklyFocus(val)
@@ -244,7 +225,7 @@ export default function WeekView() {
     }, 600)
   }
 
-  // ─── Goals ────────────────────────────────────────────────────────────────
+  // ─── Goals ─────────────────────────────────────────────────────────────────
 
   const addGoal = async () => {
     if (!newGoalText.trim() || !weekId) return
@@ -264,7 +245,7 @@ export default function WeekView() {
     await fetch(`/api/weeks/${weekId}/goals/${id}`, { method: "DELETE" })
   }
 
-  // ─── Tasks ────────────────────────────────────────────────────────────────
+  // ─── Tasks ─────────────────────────────────────────────────────────────────
 
   const addTask = async () => {
     if (!newTaskText.trim() || !weekId) return
@@ -284,7 +265,7 @@ export default function WeekView() {
     await fetch(`/api/weeks/${weekId}/tasks/${id}`, { method: "DELETE" })
   }
 
-  // ─── Chores ───────────────────────────────────────────────────────────────
+  // ─── Chores ────────────────────────────────────────────────────────────────
 
   const addChore = async () => {
     if (!newChoreText.trim() || !weekId) return
@@ -304,7 +285,7 @@ export default function WeekView() {
     await fetch(`/api/weeks/${weekId}/chores/${id}`, { method: "DELETE" })
   }
 
-  // ─── Habits ───────────────────────────────────────────────────────────────
+  // ─── Habits ────────────────────────────────────────────────────────────────
 
   const addHabit = async () => {
     if (!newHabitName.trim()) return
@@ -332,12 +313,10 @@ export default function WeekView() {
     if (newDone) celebrate()
   }
 
-  const isHabitDone = (habitId: number, day: DayKey) =>
-    habitDays.find(hd => hd.habitId === habitId && hd.day === day)?.done ?? false
+  const isHabitDone  = (habitId: number, day: DayKey) => habitDays.find(hd => hd.habitId === habitId && hd.day === day)?.done ?? false
+  const habitCount   = (habitId: number) => DAYS.filter(d => isHabitDone(habitId, d)).length
 
-  const habitCount = (habitId: number) => DAYS.filter(d => isHabitDone(habitId, d)).length
-
-  // ─── Deliverables ─────────────────────────────────────────────────────────
+  // ─── Deliverables ──────────────────────────────────────────────────────────
 
   const addDeliverable = async () => {
     if (!newDelivName.trim()) return
@@ -359,7 +338,7 @@ export default function WeekView() {
     await fetch(`/api/deliverables/${id}`, { method: "DELETE" })
   }
 
-  // ─── Upskilling ───────────────────────────────────────────────────────────
+  // ─── Upskilling ────────────────────────────────────────────────────────────
 
   const addUpskilling = async () => {
     if (!newUpskillName.trim() || !newUpskillProv.trim()) return
@@ -382,7 +361,7 @@ export default function WeekView() {
     await fetch(`/api/upskilling/${id}`, { method: "DELETE" })
   }
 
-  // ─── Notes ────────────────────────────────────────────────────────────────
+  // ─── Notes ─────────────────────────────────────────────────────────────────
 
   const addNote = async () => {
     if (!newNoteText.trim()) return
@@ -402,19 +381,19 @@ export default function WeekView() {
     await fetch(`/api/notes/${id}`, { method: "DELETE" })
   }
 
-  // ─── Derived ──────────────────────────────────────────────────────────────
+  // ─── Derived ───────────────────────────────────────────────────────────────
 
-  const todayMonday    = getMonday(new Date())
-  const isCurrentWeek  = toDateStr(todayMonday) === toDateStr(currentMonday)
-  const todayDayIndex  = isCurrentWeek ? (new Date().getDay() + 6) % 7 : -1
+  const todayMonday   = getMonday(new Date())
+  const isCurrentWeek = toDateStr(todayMonday) === toDateStr(currentMonday)
+  const todayDayIndex = isCurrentWeek ? (new Date().getDay() + 6) % 7 : -1
 
   const filteredNotes = notes.filter(n => {
-    if (noteFilter === "All")     return true
+    if (noteFilter === "All")      return true
     if (noteFilter === "Untagged") return !n.tag
     return n.tag === noteFilter
   })
 
-  // ─── Add input helpers ────────────────────────────────────────────────────
+  // ─── Add input helper ──────────────────────────────────────────────────────
 
   const addRow = (value: string, setValue: (v: string) => void, onAdd: () => void, placeholder: string) => (
     <div className="flex items-center gap-2 pt-1">
@@ -423,39 +402,52 @@ export default function WeekView() {
         onChange={e => setValue(e.target.value)}
         onKeyDown={e => e.key === "Enter" && onAdd()}
         placeholder={placeholder}
-        className="flex-1 bg-transparent text-sm placeholder-white/20 outline-none border-b border-white/10 pb-1 text-[#F5F0E8]"
+        className="flex-1 bg-transparent text-sm outline-none border-b pb-1"
+        style={{ borderColor: "var(--line)", color: "var(--ink)" }}
       />
-      <button onClick={onAdd} className="text-[#D4A853] hover:text-[#E8C070] transition-colors flex-shrink-0">
+      <button onClick={onAdd} className="flex-shrink-0 transition-colors" style={{ color: "var(--burgundy)" }}>
         <PlusIcon />
       </button>
     </div>
   )
 
-  // ─── Render ───────────────────────────────────────────────────────────────
+  // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen text-[#F5F0E8]" style={{ background: "#0C0A0B" }}>
-
-      {celebrationKey > 0 && <Confetti key={celebrationKey} />}
-
+    <div className="min-h-screen" style={{ color: "var(--ink)" }}>
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-5">
 
         {/* ── Navigation ── */}
         <div className="flex items-center justify-between mb-2">
-          <button onClick={prevWeek} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
+          <button onClick={prevWeek} className="p-2 rounded-lg transition-colors" style={{ color: "var(--ink-soft)" }}
+            onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.05)")}
+            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+          >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15,18 9,12 15,6" />
             </svg>
           </button>
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-semibold tracking-wide">{formatWeekRange(currentMonday)}</h1>
+            <h1
+              className="text-xl font-semibold tracking-wide"
+              style={{ fontFamily: "var(--font-fraunces, serif)" }}
+            >
+              {formatWeekRange(currentMonday)}
+            </h1>
             {!isCurrentWeek && (
-              <button onClick={goToday} className="text-xs px-3 py-1 rounded-full border transition-colors" style={{ borderColor: "rgba(212,168,83,0.4)", color: "#D4A853" }}>
+              <button
+                onClick={goToday}
+                className="text-xs px-3 py-1 rounded-full border transition-colors"
+                style={{ borderColor: "rgba(122,34,48,0.35)", color: "var(--burgundy)" }}
+              >
                 Today
               </button>
             )}
           </div>
-          <button onClick={nextWeek} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
+          <button onClick={nextWeek} className="p-2 rounded-lg transition-colors" style={{ color: "var(--ink-soft)" }}
+            onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.05)")}
+            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+          >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9,18 15,12 9,6" />
             </svg>
@@ -463,49 +455,61 @@ export default function WeekView() {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-20 opacity-30 text-sm">Loading…</div>
+          <div className="flex items-center justify-center py-20 text-sm" style={{ color: "var(--ink-soft)" }}>Loading…</div>
         ) : (
           <>
             {/* ── Weekly Focus ── */}
             <div
               className="rounded-2xl p-6"
-              style={{ background: "radial-gradient(at 88% 12%, rgba(176,130,60,0.38), transparent 50%), linear-gradient(135deg,#8A2436,#581621)" }}
+              style={{ background: "radial-gradient(at 88% 12%, rgba(176,130,60,0.3), transparent 50%), linear-gradient(135deg,#7A2230,#4a1520)" }}
             >
-              <p className="text-[11px] font-semibold uppercase tracking-widest opacity-50 mb-3">Weekly Focus</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: "rgba(255,255,255,0.5)" }}>Weekly Focus</p>
               <textarea
                 ref={focusRef}
                 value={weeklyFocus}
                 onChange={e => handleFocusChange(e.target.value)}
                 placeholder="What is this week really about?"
                 rows={1}
-                className="w-full bg-transparent text-[#F5F0E8] text-2xl font-bold placeholder-white/25 resize-none outline-none leading-tight overflow-hidden"
-                style={{ minHeight: "2.5rem" }}
+                className="w-full bg-transparent text-white text-2xl font-bold resize-none outline-none leading-tight overflow-hidden"
+                style={{ fontFamily: "var(--font-fraunces, serif)", minHeight: "2.5rem" }}
               />
 
               <div className="mt-5 space-y-2">
                 {goals.map(g => (
                   <div key={g.id} className="flex items-center gap-3 group">
-                    <GoldCheckbox checked={g.done} onChange={() => toggleGoal(g)} />
-                    <span className={`flex-1 text-sm leading-relaxed ${g.done ? "line-through opacity-40" : ""}`}>{g.text}</span>
-                    <button onClick={() => deleteGoal(g.id)} className="opacity-0 group-hover:opacity-30 hover:!opacity-80 transition-opacity text-white">
+                    <Checkbox checked={g.done} onChange={() => toggleGoal(g)} />
+                    <span className={`flex-1 text-sm leading-relaxed text-white ${g.done ? "line-through opacity-40" : ""}`}>{g.text}</span>
+                    <button onClick={() => deleteGoal(g.id)} className="opacity-0 group-hover:opacity-40 hover:!opacity-80 transition-opacity text-white">
                       <XIcon />
                     </button>
                   </div>
                 ))}
-                {addRow(newGoalText, setNewGoalText, addGoal, "Add a goal…")}
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    value={newGoalText}
+                    onChange={e => setNewGoalText(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && addGoal()}
+                    placeholder="Add a goal…"
+                    className="flex-1 bg-transparent text-sm outline-none border-b pb-1 text-white"
+                    style={{ borderColor: "rgba(255,255,255,0.2)" }}
+                  />
+                  <button onClick={addGoal} className="flex-shrink-0 text-white opacity-60 hover:opacity-100 transition-opacity">
+                    <PlusIcon />
+                  </button>
+                </div>
               </div>
             </div>
 
             {/* ── Tasks + Chores ── */}
             <div className="grid grid-cols-2 gap-4">
               <div className={CARD} style={CARD_STYLE}>
-                <p className="text-[11px] font-semibold uppercase tracking-widest opacity-50 mb-4">Tasks</p>
+                <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--ink-soft)" }}>Tasks</p>
                 <div className="space-y-2">
                   {tasks.map(t => (
                     <div key={t.id} className="flex items-center gap-3 group">
-                      <GoldCheckbox checked={t.done} onChange={() => toggleTask(t)} />
+                      <Checkbox checked={t.done} onChange={() => toggleTask(t)} />
                       <span className={`flex-1 text-sm ${t.done ? "line-through opacity-40" : ""}`}>{t.title}</span>
-                      <button onClick={() => deleteTask(t.id)} className="opacity-0 group-hover:opacity-30 hover:!opacity-80 transition-opacity">
+                      <button onClick={() => deleteTask(t.id)} className="opacity-0 group-hover:opacity-30 hover:!opacity-70 transition-opacity" style={{ color: "var(--ink)" }}>
                         <XIcon />
                       </button>
                     </div>
@@ -515,13 +519,13 @@ export default function WeekView() {
               </div>
 
               <div className={CARD} style={CARD_STYLE}>
-                <p className="text-[11px] font-semibold uppercase tracking-widest opacity-50 mb-4">Chores</p>
+                <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--ink-soft)" }}>Chores</p>
                 <div className="space-y-2">
                   {chores.map(c => (
                     <div key={c.id} className="flex items-center gap-3 group">
-                      <GoldCheckbox checked={c.done} onChange={() => toggleChore(c)} />
+                      <Checkbox checked={c.done} onChange={() => toggleChore(c)} />
                       <span className={`flex-1 text-sm ${c.done ? "line-through opacity-40" : ""}`}>{c.title}</span>
-                      <button onClick={() => deleteChore(c.id)} className="opacity-0 group-hover:opacity-30 hover:!opacity-80 transition-opacity">
+                      <button onClick={() => deleteChore(c.id)} className="opacity-0 group-hover:opacity-30 hover:!opacity-70 transition-opacity" style={{ color: "var(--ink)" }}>
                         <XIcon />
                       </button>
                     </div>
@@ -533,22 +537,22 @@ export default function WeekView() {
 
             {/* ── Routines & Gym ── */}
             <div className={CARD} style={CARD_STYLE}>
-              <p className="text-[11px] font-semibold uppercase tracking-widest opacity-50 mb-4">Routines &amp; Gym</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--ink-soft)" }}>Routines &amp; Gym</p>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr>
-                      <th className="text-left pb-3 pr-4 text-xs font-normal opacity-30 w-32" />
+                      <th className="text-left pb-3 pr-4 text-xs font-normal w-32" style={{ color: "var(--ink-soft)", opacity: 0.5 }} />
                       {DAYS.map((day, i) => (
                         <th
                           key={day}
                           className="pb-3 text-xs font-semibold text-center w-10"
-                          style={{ color: i === todayDayIndex ? "#D4A853" : "rgba(245,240,232,0.35)" }}
+                          style={{ color: i === todayDayIndex ? "var(--burgundy)" : "var(--ink-soft)" }}
                         >
                           {day}
                         </th>
                       ))}
-                      <th className="pb-3 text-xs font-normal opacity-30 pl-3 text-right">/7</th>
+                      <th className="pb-3 text-xs font-normal pl-3 text-right" style={{ color: "var(--ink-soft)", opacity: 0.5 }}>/7</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -557,7 +561,7 @@ export default function WeekView() {
                         <td className="py-1.5 pr-4">
                           <div className="flex items-center gap-2">
                             <span className="text-sm">{habit.name}</span>
-                            <button onClick={() => deleteHabit(habit.id)} className="opacity-0 group-hover:opacity-25 hover:!opacity-70 transition-opacity">
+                            <button onClick={() => deleteHabit(habit.id)} className="opacity-0 group-hover:opacity-25 hover:!opacity-60 transition-opacity" style={{ color: "var(--ink)" }}>
                               <XIcon size={11} />
                             </button>
                           </div>
@@ -571,22 +575,22 @@ export default function WeekView() {
                                 onClick={() => toggleHabitDay(habit.id, day)}
                                 className="w-8 h-8 rounded-lg mx-auto flex items-center justify-center transition-all duration-150"
                                 style={{
-                                  background:  done    ? "#D4A853"
-                                             : isToday ? "rgba(212,168,83,0.1)"
-                                             :           "rgba(255,255,255,0.04)",
-                                  border: isToday && !done ? "1px solid rgba(212,168,83,0.25)" : "1px solid transparent",
+                                  background: done    ? "var(--burgundy)"
+                                            : isToday ? "rgba(122,34,48,0.1)"
+                                            :           "var(--paper)",
+                                  border: isToday && !done ? "1px solid rgba(122,34,48,0.3)" : "1px solid transparent",
                                 }}
                               >
                                 {done && (
                                   <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
-                                    <path d="M1 4.5L3.5 7L10 1" stroke="#0C0A0B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                    <path d="M1 4.5L3.5 7L10 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                                   </svg>
                                 )}
                               </button>
                             </td>
                           )
                         })}
-                        <td className="py-1.5 pl-3 text-sm font-bold text-right" style={{ color: "#D4A853" }}>
+                        <td className="py-1.5 pl-3 text-sm font-bold text-right" style={{ color: "var(--gold)" }}>
                           {habitCount(habit.id)}
                         </td>
                       </tr>
@@ -594,14 +598,14 @@ export default function WeekView() {
                   </tbody>
                 </table>
               </div>
-              <div className="mt-3 pt-3 border-t border-white/[0.05]">
+              <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--line)" }}>
                 {addRow(newHabitName, setNewHabitName, addHabit, "Add habit…")}
               </div>
             </div>
 
             {/* ── Work Deliverables ── */}
             <div className={CARD} style={CARD_STYLE}>
-              <p className="text-[11px] font-semibold uppercase tracking-widest opacity-50 mb-4">Work Deliverables</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--ink-soft)" }}>Work Deliverables</p>
               <div className="space-y-4">
                 {deliverables.map((d, i) => {
                   const color = RING_COLORS[i % RING_COLORS.length]
@@ -611,7 +615,7 @@ export default function WeekView() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-sm font-medium truncate">{d.name}</span>
-                          <button onClick={() => deleteDeliverable(d.id)} className="opacity-0 group-hover:opacity-25 hover:!opacity-70 transition-opacity ml-2 flex-shrink-0">
+                          <button onClick={() => deleteDeliverable(d.id)} className="opacity-0 group-hover:opacity-25 hover:!opacity-70 transition-opacity ml-2 flex-shrink-0" style={{ color: "var(--ink)" }}>
                             <XIcon />
                           </button>
                         </div>
@@ -631,7 +635,7 @@ export default function WeekView() {
 
             {/* ── Upskilling ── */}
             <div className={CARD} style={CARD_STYLE}>
-              <p className="text-[11px] font-semibold uppercase tracking-widest opacity-50 mb-4">Upskilling</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--ink-soft)" }}>Upskilling</p>
               <div className="space-y-4">
                 {upskilling.map((u, i) => {
                   const color = RING_COLORS[(i + 3) % RING_COLORS.length]
@@ -641,11 +645,11 @@ export default function WeekView() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-0.5">
                           <span className="text-sm font-medium truncate">{u.name}</span>
-                          <button onClick={() => deleteUpskilling(u.id)} className="opacity-0 group-hover:opacity-25 hover:!opacity-70 transition-opacity ml-2 flex-shrink-0">
+                          <button onClick={() => deleteUpskilling(u.id)} className="opacity-0 group-hover:opacity-25 hover:!opacity-70 transition-opacity ml-2 flex-shrink-0" style={{ color: "var(--ink)" }}>
                             <XIcon />
                           </button>
                         </div>
-                        <p className="text-xs opacity-35 mb-2">{u.provider}</p>
+                        <p className="text-xs mb-2" style={{ color: "var(--ink-soft)" }}>{u.provider}</p>
                         <input
                           type="range" min={0} max={100} value={u.progress}
                           onChange={e => updateUpskillProgress(u.id, parseInt(e.target.value))}
@@ -662,17 +666,19 @@ export default function WeekView() {
                       value={newUpskillName}
                       onChange={e => setNewUpskillName(e.target.value)}
                       placeholder="Skill name…"
-                      className="w-full bg-transparent text-sm placeholder-white/20 outline-none border-b border-white/10 pb-1 text-[#F5F0E8]"
+                      className="w-full bg-transparent text-sm outline-none border-b pb-1"
+                      style={{ borderColor: "var(--line)", color: "var(--ink)" }}
                     />
                     <input
                       value={newUpskillProv}
                       onChange={e => setNewUpskillProv(e.target.value)}
                       onKeyDown={e => e.key === "Enter" && addUpskilling()}
                       placeholder="Provider (e.g. Coursera)…"
-                      className="w-full bg-transparent text-sm placeholder-white/20 outline-none border-b border-white/10 pb-1 text-[#F5F0E8]"
+                      className="w-full bg-transparent text-sm outline-none border-b pb-1"
+                      style={{ borderColor: "var(--line)", color: "var(--ink)" }}
                     />
                   </div>
-                  <button onClick={addUpskilling} className="text-[#D4A853] hover:text-[#E8C070] transition-colors pb-1 flex-shrink-0">
+                  <button onClick={addUpskilling} className="pb-1 flex-shrink-0 transition-colors" style={{ color: "var(--burgundy)" }}>
                     <PlusIcon />
                   </button>
                 </div>
@@ -681,7 +687,7 @@ export default function WeekView() {
 
             {/* ── Notes to Self ── */}
             <div className={CARD} style={CARD_STYLE}>
-              <p className="text-[11px] font-semibold uppercase tracking-widest opacity-50 mb-4">Notes to Self</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--ink-soft)" }}>Notes to Self</p>
 
               {/* Filter chips */}
               <div className="flex flex-wrap gap-2 mb-4">
@@ -691,9 +697,9 @@ export default function WeekView() {
                     onClick={() => setNoteFilter(f)}
                     className="text-xs px-3 py-1 rounded-full transition-all"
                     style={{
-                      background:  noteFilter === f ? (TAG_COLORS[f] ?? "#D4A853") + "20" : "rgba(255,255,255,0.04)",
-                      border:     `1px solid ${noteFilter === f ? (TAG_COLORS[f] ?? "#D4A853") + "55" : "rgba(255,255,255,0.08)"}`,
-                      color:       noteFilter === f ? (TAG_COLORS[f] ?? "#D4A853") : "rgba(245,240,232,0.5)",
+                      background: noteFilter === f ? (TAG_COLORS[f] ?? "var(--burgundy)") + "22" : "var(--paper)",
+                      border:    `1px solid ${noteFilter === f ? (TAG_COLORS[f] ?? "var(--burgundy)") + "55" : "var(--line)"}`,
+                      color:      noteFilter === f ? (TAG_COLORS[f] ?? "var(--burgundy)") : "var(--ink-soft)",
                     }}
                   >
                     {f}
@@ -708,9 +714,10 @@ export default function WeekView() {
                   onChange={e => setNewNoteText(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && addNote()}
                   placeholder="Capture a thought…"
-                  className="flex-1 bg-transparent text-sm placeholder-white/20 outline-none border-b border-white/10 pb-1 text-[#F5F0E8]"
+                  className="flex-1 bg-transparent text-sm outline-none border-b pb-1"
+                  style={{ borderColor: "var(--line)", color: "var(--ink)" }}
                 />
-                <button onClick={addNote} className="text-[#D4A853] hover:text-[#E8C070] transition-colors">
+                <button onClick={addNote} className="transition-colors" style={{ color: "var(--burgundy)" }}>
                   <PlusIcon />
                 </button>
               </div>
@@ -722,8 +729,8 @@ export default function WeekView() {
                     key={note.id}
                     className="rounded-xl p-4 relative group"
                     style={{
-                      background:  "rgba(255,255,255,0.04)",
-                      borderLeft: `3px solid ${note.tag ? (TAG_COLORS[note.tag] ?? "#D4A853") : "rgba(255,255,255,0.12)"}`,
+                      background:  "var(--paper)",
+                      borderLeft: `3px solid ${note.tag ? (TAG_COLORS[note.tag] ?? "var(--gold)") : "var(--line)"}`,
                     }}
                   >
                     <p className="text-sm leading-relaxed pr-7">{note.text}</p>
@@ -731,6 +738,7 @@ export default function WeekView() {
                     <button
                       onClick={() => deleteNote(note.id)}
                       className="absolute top-3 right-3 opacity-0 group-hover:opacity-25 hover:!opacity-70 transition-opacity"
+                      style={{ color: "var(--ink)" }}
                     >
                       <XIcon />
                     </button>
@@ -739,7 +747,7 @@ export default function WeekView() {
                       {note.tag ? (
                         <span
                           className="inline-block text-xs px-2 py-0.5 rounded-full"
-                          style={{ background: (TAG_COLORS[note.tag] ?? "#D4A853") + "20", color: TAG_COLORS[note.tag] ?? "#D4A853" }}
+                          style={{ background: (TAG_COLORS[note.tag] ?? "var(--gold)") + "20", color: TAG_COLORS[note.tag] ?? "var(--gold)" }}
                         >
                           {note.tag}
                         </span>
@@ -755,13 +763,13 @@ export default function WeekView() {
                               {t}
                             </button>
                           ))}
-                          <button onClick={() => setOpenTagNote(null)} className="text-xs opacity-30 hover:opacity-60 ml-1">Cancel</button>
+                          <button onClick={() => setOpenTagNote(null)} className="text-xs ml-1 transition-opacity" style={{ color: "var(--ink-soft)", opacity: 0.5 }}>Cancel</button>
                         </div>
                       ) : (
                         <button
                           onClick={() => setOpenTagNote(note.id)}
-                          className="text-xs opacity-25 hover:opacity-60 transition-opacity"
-                          style={{ color: "#D4A853" }}
+                          className="text-xs transition-opacity hover:opacity-80"
+                          style={{ color: "var(--gold)", opacity: 0.55 }}
                         >
                           + Add tag
                         </button>

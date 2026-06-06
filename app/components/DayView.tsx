@@ -9,8 +9,8 @@ type Category = "Work" | "Personal" | "Health" | "Social" | "Focus"
 interface EventItem {
   id: number
   date: string
-  startTime: string // "HH:MM"
-  endTime: string   // "HH:MM"
+  startTime: string
+  endTime: string
   title: string
   category: Category
 }
@@ -27,9 +27,9 @@ const CAT_COLORS: Record<Category, string> = {
   Focus:    "#B0823C",
 }
 
-const GRID_START = 7   // 7 AM
-const GRID_END   = 22  // 10 PM
-const HOUR_H     = 64  // px per hour
+const GRID_START = 7
+const GRID_END   = 22
+const HOUR_H     = 64
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -62,13 +62,12 @@ function formatHour(h: number): string {
 
 function pad2(n: number): string { return String(n).padStart(2, "0") }
 
-// Greedy column layout for overlapping events
 function computeLayout(events: EventItem[]): Map<number, { leftPct: number; widthPct: number }> {
   const result = new Map<number, { leftPct: number; widthPct: number }>()
   if (!events.length) return result
 
-  const sorted = [...events].sort((a, b) => mins(a.startTime) - mins(b.startTime))
-  const colEnds: number[] = [] // end-minute of the last event in each column
+  const sorted  = [...events].sort((a, b) => mins(a.startTime) - mins(b.startTime))
+  const colEnds: number[] = []
 
   for (const e of sorted) {
     const start = mins(e.startTime)
@@ -76,7 +75,7 @@ function computeLayout(events: EventItem[]): Map<number, { leftPct: number; widt
     let col = colEnds.findIndex(endMin => endMin <= start)
     if (col === -1) col = colEnds.length
     colEnds[col] = end
-    result.set(e.id, { leftPct: col, widthPct: -1 }) // widthPct filled below
+    result.set(e.id, { leftPct: col, widthPct: -1 })
   }
 
   const totalCols = colEnds.length
@@ -105,8 +104,6 @@ export default function DayView() {
 
   const isToday = toDateStr(currentDate) === toDateStr(new Date())
 
-  // ─── Load events ────────────────────────────────────────────────────────────
-
   useEffect(() => {
     setLoading(true)
     fetch(`/api/events?date=${toDateStr(currentDate)}`)
@@ -114,8 +111,6 @@ export default function DayView() {
       .then(setEvents)
       .finally(() => setLoading(false))
   }, [currentDate])
-
-  // ─── Current-time indicator ─────────────────────────────────────────────────
 
   useEffect(() => {
     const update = () => {
@@ -128,13 +123,9 @@ export default function DayView() {
     return () => clearInterval(t)
   }, [])
 
-  // ─── Navigation ─────────────────────────────────────────────────────────────
-
   const prevDay = () => setCurrentDate(d => { const n = new Date(d); n.setDate(n.getDate() - 1); return n })
   const nextDay = () => setCurrentDate(d => { const n = new Date(d); n.setDate(n.getDate() + 1); return n })
   const goToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); setCurrentDate(d) }
-
-  // ─── Add event ───────────────────────────────────────────────────────────────
 
   const addEvent = async () => {
     if (!newTitle.trim()) return
@@ -161,14 +152,10 @@ export default function DayView() {
     setNewCategory("Work")
   }
 
-  // ─── Delete event ────────────────────────────────────────────────────────────
-
   const deleteEvent = async (id: number) => {
     setEvents(es => es.filter(e => e.id !== id))
     await fetch(`/api/events/${id}`, { method: "DELETE" })
   }
-
-  // ─── Grid click → prefill form ──────────────────────────────────────────────
 
   const handleGridClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect  = e.currentTarget.getBoundingClientRect()
@@ -183,35 +170,46 @@ export default function DayView() {
     setShowForm(true)
   }
 
-  // ─── Layout ──────────────────────────────────────────────────────────────────
-
-  const layout = computeLayout(events)
+  const layout     = computeLayout(events)
   const HOUR_LABELS = Array.from({ length: GRID_END - GRID_START + 1 }, (_, i) => GRID_START + i)
 
-  // ─── Render ──────────────────────────────────────────────────────────────────
-
   return (
-    <div className="min-h-screen text-[#F5F0E8]" style={{ background: "#0C0A0B" }}>
+    <div className="min-h-screen" style={{ color: "var(--ink)" }}>
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-5">
 
         {/* ── Header ── */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button onClick={prevDay} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
+            <button onClick={prevDay} className="p-2 rounded-lg transition-colors" style={{ color: "var(--ink-soft)" }}
+              onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.05)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+            >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="15,18 9,12 15,6" />
               </svg>
             </button>
             <div>
-              <h1 className="text-xl font-semibold tracking-wide">{formatDay(currentDate)}</h1>
+              <h1
+                className="text-xl font-semibold tracking-wide"
+                style={{ fontFamily: "var(--font-fraunces, serif)" }}
+              >
+                {formatDay(currentDate)}
+              </h1>
             </div>
-            <button onClick={nextDay} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
+            <button onClick={nextDay} className="p-2 rounded-lg transition-colors" style={{ color: "var(--ink-soft)" }}
+              onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.05)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+            >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="9,18 15,12 9,6" />
               </svg>
             </button>
             {!isToday && (
-              <button onClick={goToday} className="text-xs px-3 py-1 rounded-full border transition-colors" style={{ borderColor: "rgba(212,168,83,0.4)", color: "#D4A853" }}>
+              <button
+                onClick={goToday}
+                className="text-xs px-3 py-1 rounded-full border transition-colors"
+                style={{ borderColor: "rgba(122,34,48,0.35)", color: "var(--burgundy)" }}
+              >
                 Today
               </button>
             )}
@@ -220,7 +218,7 @@ export default function DayView() {
           <button
             onClick={() => setShowForm(true)}
             className="flex items-center gap-1.5 text-sm px-4 py-1.5 rounded-full transition-colors"
-            style={{ background: "rgba(212,168,83,0.12)", border: "1px solid rgba(212,168,83,0.35)", color: "#D4A853" }}
+            style={{ background: "var(--burgundy)", color: "white" }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
@@ -234,7 +232,7 @@ export default function DayView() {
           {CATEGORIES.map(cat => (
             <div key={cat} className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: CAT_COLORS[cat] }} />
-              <span className="text-xs" style={{ color: "rgba(245,240,232,0.45)" }}>{cat}</span>
+              <span className="text-xs" style={{ color: "var(--ink-soft)" }}>{cat}</span>
             </div>
           ))}
         </div>
@@ -242,7 +240,7 @@ export default function DayView() {
         {/* ── Time grid ── */}
         <div
           className="rounded-2xl overflow-hidden border"
-          style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}
+          style={{ background: "var(--card)", borderColor: "var(--line)" }}
         >
           <div className="overflow-y-auto" style={{ maxHeight: "72vh" }}>
             <div className="flex">
@@ -255,7 +253,7 @@ export default function DayView() {
                     className="flex items-start justify-end pr-3"
                     style={{ height: h < GRID_END ? HOUR_H : 24, paddingTop: 2 }}
                   >
-                    <span className="text-[11px]" style={{ color: "rgba(245,240,232,0.3)" }}>
+                    <span className="text-[11px]" style={{ color: "var(--ink-soft)", opacity: 0.6 }}>
                       {formatHour(h)}
                     </span>
                   </div>
@@ -270,20 +268,12 @@ export default function DayView() {
               >
                 {/* Hour grid lines */}
                 {Array.from({ length: GRID_END - GRID_START }, (_, i) => (
-                  <div
-                    key={i}
-                    className="absolute w-full"
-                    style={{ top: i * HOUR_H, height: 1, background: "rgba(255,255,255,0.06)" }}
-                  />
+                  <div key={i} className="absolute w-full" style={{ top: i * HOUR_H, height: 1, background: "rgba(0,0,0,0.07)" }} />
                 ))}
 
                 {/* Half-hour lines */}
                 {Array.from({ length: GRID_END - GRID_START }, (_, i) => (
-                  <div
-                    key={`h${i}`}
-                    className="absolute w-full"
-                    style={{ top: i * HOUR_H + HOUR_H / 2, height: 1, background: "rgba(255,255,255,0.03)" }}
-                  />
+                  <div key={`h${i}`} className="absolute w-full" style={{ top: i * HOUR_H + HOUR_H / 2, height: 1, background: "rgba(0,0,0,0.04)" }} />
                 ))}
 
                 {/* Current time indicator */}
@@ -292,8 +282,8 @@ export default function DayView() {
                     className="absolute w-full flex items-center pointer-events-none z-20"
                     style={{ top: timeY - 1 }}
                   >
-                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 -ml-1.5" style={{ background: "#F87171" }} />
-                    <div className="flex-1 h-px" style={{ background: "rgba(248,113,113,0.7)" }} />
+                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 -ml-1.5" style={{ background: "#DC2626" }} />
+                    <div className="flex-1 h-px" style={{ background: "rgba(220,38,38,0.6)" }} />
                   </div>
                 )}
 
@@ -310,24 +300,24 @@ export default function DayView() {
                       style={{
                         top,
                         height,
-                        left:    `${pos.leftPct}%`,
-                        width:   `${pos.widthPct}%`,
+                        left:       `${pos.leftPct}%`,
+                        width:      `${pos.widthPct}%`,
                         background: color + "CC",
                         borderLeft: `3px solid ${color}`,
                         padding:    "3px 6px",
                       }}
                       onClick={e => e.stopPropagation()}
                     >
-                      <p className="text-[12px] font-semibold leading-tight text-[#F5F0E8] truncate">{event.title}</p>
+                      <p className="text-[12px] font-semibold leading-tight text-white truncate">{event.title}</p>
                       {height > 40 && (
-                        <p className="text-[10px] text-[#F5F0E8] opacity-60 mt-0.5">
+                        <p className="text-[10px] text-white opacity-60 mt-0.5">
                           {event.startTime} – {event.endTime}
                         </p>
                       )}
                       <button
                         onClick={() => deleteEvent(event.id)}
                         className="absolute top-1 right-1 w-4 h-4 rounded flex items-center justify-center opacity-0 group-hover:opacity-70 hover:!opacity-100 transition-opacity text-white text-xs"
-                        style={{ background: "rgba(0,0,0,0.3)" }}
+                        style={{ background: "rgba(0,0,0,0.35)" }}
                       >
                         ×
                       </button>
@@ -345,15 +335,15 @@ export default function DayView() {
       {showForm && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ background: "rgba(0,0,0,0.65)" }}
+          style={{ background: "rgba(0,0,0,0.35)" }}
           onClick={closeForm}
         >
           <div
             className="w-full max-w-sm rounded-2xl p-6 space-y-4"
-            style={{ background: "#1A1215", border: "1px solid rgba(255,255,255,0.1)" }}
+            style={{ background: "var(--card)", border: "1px solid var(--line)" }}
             onClick={e => e.stopPropagation()}
           >
-            <h2 className="text-base font-semibold text-[#F5F0E8]">Add Block</h2>
+            <h2 className="text-base font-semibold" style={{ fontFamily: "var(--font-fraunces, serif)", color: "var(--ink)" }}>Add Block</h2>
 
             <input
               autoFocus
@@ -361,29 +351,29 @@ export default function DayView() {
               onChange={e => setNewTitle(e.target.value)}
               onKeyDown={e => e.key === "Enter" && addEvent()}
               placeholder="Block title…"
-              className="w-full rounded-lg px-3 py-2 text-sm text-[#F5F0E8] outline-none placeholder-white/25"
-              style={{ background: "rgba(255,255,255,0.07)" }}
+              className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+              style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }}
             />
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="text-[11px] opacity-40 mb-1">Start</p>
+                <p className="text-[11px] mb-1" style={{ color: "var(--ink-soft)" }}>Start</p>
                 <input
                   type="time"
                   value={newStart}
                   onChange={e => setNewStart(e.target.value)}
-                  className="w-full rounded-lg px-3 py-2 text-sm text-[#F5F0E8] outline-none"
-                  style={{ background: "rgba(255,255,255,0.07)", colorScheme: "dark" }}
+                  className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+                  style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }}
                 />
               </div>
               <div>
-                <p className="text-[11px] opacity-40 mb-1">End</p>
+                <p className="text-[11px] mb-1" style={{ color: "var(--ink-soft)" }}>End</p>
                 <input
                   type="time"
                   value={newEnd}
                   onChange={e => setNewEnd(e.target.value)}
-                  className="w-full rounded-lg px-3 py-2 text-sm text-[#F5F0E8] outline-none"
-                  style={{ background: "rgba(255,255,255,0.07)", colorScheme: "dark" }}
+                  className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+                  style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }}
                 />
               </div>
             </div>
@@ -395,9 +385,9 @@ export default function DayView() {
                   onClick={() => setNewCategory(cat)}
                   className="px-3 py-1 rounded-full text-xs transition-all"
                   style={{
-                    background: newCategory === cat ? CAT_COLORS[cat] + "33" : "rgba(255,255,255,0.06)",
-                    border:     `1px solid ${newCategory === cat ? CAT_COLORS[cat] + "99" : "rgba(255,255,255,0.1)"}`,
-                    color:      newCategory === cat ? CAT_COLORS[cat] : "rgba(245,240,232,0.45)",
+                    background: newCategory === cat ? CAT_COLORS[cat] + "28" : "var(--paper)",
+                    border:    `1px solid ${newCategory === cat ? CAT_COLORS[cat] + "99" : "var(--line)"}`,
+                    color:      newCategory === cat ? CAT_COLORS[cat] : "var(--ink-soft)",
                   }}
                 >
                   {cat}
@@ -408,7 +398,7 @@ export default function DayView() {
             <div className="flex gap-2 pt-1">
               <button
                 onClick={addEvent}
-                className="flex-1 py-2 rounded-lg text-sm font-semibold text-[#F5F0E8] transition-opacity hover:opacity-90"
+                className="flex-1 py-2 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
                 style={{ background: CAT_COLORS[newCategory] }}
               >
                 Add Block
@@ -416,7 +406,7 @@ export default function DayView() {
               <button
                 onClick={closeForm}
                 className="px-4 py-2 rounded-lg text-sm transition-opacity hover:opacity-80"
-                style={{ background: "rgba(255,255,255,0.07)", color: "rgba(245,240,232,0.5)" }}
+                style={{ background: "var(--paper)", color: "var(--ink-soft)", border: "1px solid var(--line)" }}
               >
                 Cancel
               </button>
